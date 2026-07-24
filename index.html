@@ -353,8 +353,10 @@
   .pantry-add-row .add-pantry{margin-top:10px;width:auto;flex:1;}
 
   /* compound pantry item (priced from component ingredients) */
-  .pantry-row.compound{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:8px 0;background:rgba(200,155,60,0.035);}
+  .pantry-row.compound{border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:6px;padding:10px 12px;margin:8px 0;background:rgba(200,155,60,0.05);}
   .compound-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-bright);border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap;}
+  .pantry-group-label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-bright);margin:18px 0 10px;display:flex;align-items:center;gap:10px;}
+  .pantry-group-label::before,.pantry-group-label::after{content:"";flex:1;height:1px;background:var(--line);}
   .comp-list{margin:8px 0;display:flex;flex-direction:column;gap:6px;}
   .comp-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .comp-row input[type=text]{flex:1;min-width:110px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'Inter';font-size:12.5px;padding:6px 8px;border-radius:5px;}
@@ -1214,7 +1216,15 @@ function renderPantryFields(){
     el.innerHTML = `<div class="empty-note" style="margin-top:0;">No pantry items yet — add flour, salt, yeast, oil, etc. with their retail price to see cost per batch. Name them to match a formula field (Flour, Water, Salt, Yeast) or an "Other ingredient" name (e.g. EVOO, DMP). A compound item (e.g. a house sauce) is priced from its own component ingredients.</div>`;
     return;
   }
-  el.innerHTML = pantry.map(p => p.kind === 'compound' ? compoundRowHtml(p) : simpleRowHtml(p)).join('');
+  // Simple items first, then a divider + all compound items grouped at the bottom.
+  const simples = pantry.filter(p => p.kind !== 'compound');
+  const compounds = pantry.filter(p => p.kind === 'compound');
+  let html = simples.map(simpleRowHtml).join('');
+  if(compounds.length){
+    html += `<div class="pantry-group-label">Compound items</div>`;
+    html += compounds.map(compoundRowHtml).join('');
+  }
+  el.innerHTML = html;
   pantry.forEach(item => {
     const row = el.querySelector(`.pantry-row[data-id="${item.id}"]`);
     if(!row) return;
@@ -1259,18 +1269,22 @@ function wireCompoundRow(row, item){
     };
   });
 }
+function focusNewPantryItem(id){
+  const el = document.querySelector(`#pantry-fields .pantry-row[data-id="${id}"] .pn-name`);
+  if(el){ el.focus(); el.scrollIntoView({block:'nearest'}); }
+}
 document.getElementById('add-pantry-btn').onclick = () => {
-  pantry.push(mkPantryItem('', 0, 'lb', 0));
+  const item = mkPantryItem('', 0, 'lb', 0);
+  pantry.push(item);
   renderPantryFields();
-  const rows = document.querySelectorAll('#pantry-fields .pn-name');
-  if(rows.length) rows[rows.length-1].focus();
+  focusNewPantryItem(item.id);
   scheduleSave();
 };
 document.getElementById('add-compound-btn').onclick = () => {
-  pantry.push(mkCompoundItem(''));
+  const item = mkCompoundItem('');
+  pantry.push(item);
   renderPantryFields();
-  const rows = document.querySelectorAll('#pantry-fields .pn-name');
-  if(rows.length) rows[rows.length-1].focus();
+  focusNewPantryItem(item.id);
   scheduleSave();
 };
 
