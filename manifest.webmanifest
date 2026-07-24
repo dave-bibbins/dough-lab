@@ -1,0 +1,11 @@
+{
+  "name": "Dough Lab",
+  "short_name": "Dough Lab",
+  "description": "Baker's-percentage dough calculator for pizza, bagels, and donuts.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1C1A17",
+  "theme_color": "#1C1A17"
+}

@@ -1,0 +1,1685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Dough Lab</title>
+<!-- PWA / iPad home-screen. These relative refs 404 harmlessly on local file:// and resolve only when hosted. -->
+<meta name="theme-color" content="#1C1A17" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Dough Lab" />
+<link rel="manifest" href="manifest.webmanifest" />
+<script>
+  // Offline support only matters when served (not file://); register defensively.
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1C1A17;
+    --panel:#242019;
+    --panel-2:#2B2620;
+    --line:#3B3427;
+    --text:#EDE6D6;
+    --text-dim:#A89C86;
+    --gold:#C89B3C;
+    --gold-bright:#E3BA63;
+    --crust:#B36A3C;
+    --paper:#F2E9D6;
+    --paper-ink:#2B2419;
+    --paper-dim:#7A6E58;
+    --good:#7FA06F;
+    --bad:#C97A5D;
+    --radius:7px;
+  }
+  *{box-sizing:border-box;}
+  input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(200,155,60,0.08), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .shell{max-width:1080px;margin:0 auto;padding:36px 20px 60px;}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:28px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand svg{flex:none;}
+  h1{
+    font-family:'Fraunces',serif;
+    font-optical-sizing:auto;
+    font-weight:700;
+    font-size:34px;
+    margin:0;
+    letter-spacing:-0.01em;
+    color:var(--text);
+  }
+  .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-top:2px;
+  }
+
+  .tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;}
+  .tabs button{
+    font-family:'Inter';font-weight:600;font-size:13.5px;
+    border:none;background:transparent;color:var(--text-dim);
+    padding:9px 18px;border-radius:999px;cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .tabs button.active{background:var(--gold);color:#20180a;}
+
+  .grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:22px;align-items:start;}
+  .grid.pantry-active{grid-template-columns:1fr;}
+  @media (max-width:860px){.grid{grid-template-columns:1fr;}}
+
+  .view-hidden{display:none !important;}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 22px 20px;
+  }
+  .panel + .panel{margin-top:18px;}
+
+  .section-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--gold-bright);
+    margin:0 0 14px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .section-label::after{content:"";flex:1;height:1px;background:var(--line);}
+  .section-label .mini-btn{
+    font-family:'Inter';text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:600;
+    color:var(--gold-bright);background:none;border:none;cursor:pointer;padding:0;
+  }
+  .section-label .mini-btn:hover{color:var(--gold);text-decoration:underline;}
+
+  .field{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);}
+  .field:last-child{border-bottom:none;}
+  .field label{font-size:13.5px;color:var(--text);}
+  .field .hint{display:block;font-size:11px;color:var(--text-dim);margin-top:1px;}
+  .field .inp-wrap{display:flex;align-items:center;gap:6px;flex:none;}
+  .field input[type=number]{
+    width:74px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;
+    padding:7px 8px;border-radius:5px;
+  }
+  .field input[type=number]:focus{outline:none;border-color:var(--gold);}
+  .field .unit{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);width:16px;}
+  select{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-family:'Inter';font-size:13px;padding:7px 8px;border-radius:5px;
+  }
+  select:focus{outline:none;border-color:var(--gold);}
+
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;}
+  .switch{position:relative;width:38px;height:21px;flex:none;}
+  .switch input{opacity:0;width:0;height:0;}
+  .switch .slider{position:absolute;inset:0;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;cursor:pointer;transition:.15s;}
+  .switch .slider::before{content:"";position:absolute;width:15px;height:15px;left:2px;top:2px;background:var(--text-dim);border-radius:50%;transition:.15s;}
+  .switch input:checked + .slider{background:rgba(200,155,60,0.25);border-color:var(--gold);}
+  .switch input:checked + .slider::before{transform:translateX(17px);background:var(--gold-bright);}
+
+  .subfields.hidden{display:none;}
+  .inp-wrap-inline{display:flex;align-items:center;gap:6px;}
+  .mini-num{
+    width:60px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;
+    padding:7px 8px;border-radius:5px;
+  }
+  .mini-num:focus{outline:none;border-color:var(--gold);}
+  .mini-unit{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);}
+
+  .scale-row{display:flex;gap:12px;}
+  .scale-row .field{flex:1;border-bottom:none;padding:6px 0;}
+
+  /* extras (dynamic ingredient rows) */
+  .extra-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);}
+  .extra-row:last-of-type{border-bottom:none;}
+  .extra-row input[type=text]{
+    flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-family:'Inter';font-size:13px;padding:7px 9px;border-radius:5px;min-width:0;
+  }
+  .extra-row input[type=text]:focus{outline:none;border-color:var(--gold);}
+  .extra-row input[type=number]{
+    width:64px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;
+    padding:7px 8px;border-radius:5px;
+  }
+  .extra-row input[type=number]:focus{outline:none;border-color:var(--gold);}
+  .extra-row .unit{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);}
+  .extra-row .rm{
+    width:22px;height:22px;flex:none;border-radius:50%;border:1px solid var(--line);background:none;
+    color:var(--text-dim);cursor:pointer;font-size:12px;line-height:1;
+  }
+  .extra-row .rm:hover{border-color:var(--crust);color:var(--crust);}
+  .add-extra{
+    margin-top:10px;font-family:'Inter';font-weight:600;font-size:12.5px;
+    background:none;border:1px dashed var(--line);color:var(--text-dim);
+    padding:8px;border-radius:5px;cursor:pointer;width:100%;
+  }
+  .add-extra:hover{border-color:var(--gold);color:var(--gold-bright);}
+
+  textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-family:'Inter';font-size:13px;line-height:1.55;padding:10px;border-radius:5px;
+    resize:vertical;min-height:90px;
+  }
+  textarea:focus{outline:none;border-color:var(--gold);}
+
+  .flour-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;}
+  .flour-auto-btn{
+    font-family:'Inter';font-weight:600;font-size:11px;letter-spacing:.02em;
+    background:var(--panel-2);border:1px solid var(--line);color:var(--gold-bright);
+    padding:5px 11px;border-radius:999px;cursor:pointer;
+  }
+  .flour-auto-btn:hover{border-color:var(--gold);}
+  .flour-auto-btn:disabled{color:var(--text-dim);opacity:.55;cursor:default;}
+  .flour-auto-btn:disabled:hover{border-color:var(--line);}
+
+  /* TICKET */
+  .ticket-wrap{position:sticky;top:20px;}
+  .ticket{
+    background:var(--paper);
+    color:var(--paper-ink);
+    border-radius:3px;
+    padding:26px 24px 22px;
+    font-family:'IBM Plex Mono',monospace;
+    box-shadow:0 18px 40px -12px rgba(0,0,0,0.55);
+    position:relative;
+  }
+  .ticket-title{font-family:'Fraunces',serif;font-weight:700;font-size:20px;letter-spacing:-0.01em;margin:0 0 2px;}
+  .ticket-sub{font-size:11px;color:var(--paper-dim);letter-spacing:.03em;margin-bottom:14px;}
+  .ticket-sub b{color:var(--crust);}
+  .perf{
+    height:9px;margin:14px -24px;
+    background-image:radial-gradient(circle, var(--bg) 2.4px, transparent 2.6px);
+    background-size:15px 100%;
+    background-position:7.5px 0;
+  }
+  .line-item{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;padding:3.5px 0;}
+  .line-item .name{color:var(--paper-ink);}
+  .line-item .dots{flex:1;border-bottom:1px dotted var(--paper-dim);margin:0 6px;transform:translateY(-3px);}
+  .line-item .amt{font-weight:600;white-space:nowrap;}
+  .line-item.sub .name{color:var(--paper-dim);padding-left:12px;font-style:italic;}
+  .group-heading{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--crust);margin:14px 0 4px;font-weight:600;}
+  .group-heading:first-child{margin-top:0;}
+  .total-row{display:flex;justify-content:space-between;font-size:16px;font-weight:700;padding-top:10px;margin-top:4px;border-top:2px solid var(--paper-ink);}
+  .method{font-size:11.5px;line-height:1.6;color:var(--paper-ink);margin-top:4px;white-space:pre-wrap;}
+  .method b{color:var(--crust);}
+  .method-block{margin-top:10px;}
+  .method-title{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--crust);margin-bottom:4px;font-weight:600;}
+
+  .save-row{display:flex;gap:8px;margin-top:16px;}
+  .save-row input[type=text]{
+    flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-family:'Inter';font-size:13px;padding:9px 10px;border-radius:5px;
+  }
+  .save-row input[type=text]:focus{outline:none;border-color:var(--gold);}
+  .btn{
+    font-family:'Inter';font-weight:600;font-size:13px;
+    background:var(--gold);color:#20180a;border:none;border-radius:5px;
+    padding:9px 16px;cursor:pointer;white-space:nowrap;
+  }
+  .btn:hover{background:var(--gold-bright);}
+
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .preset-chip{
+    display:flex;align-items:center;gap:7px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:999px;
+    padding:6px 8px 6px 13px;font-size:12.5px;cursor:pointer;color:var(--text);
+  }
+  .preset-chip:hover{border-color:var(--gold);}
+  .preset-chip .x{
+    width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--text-dim);font-size:12px;line-height:1;
+  }
+  .preset-chip .x:hover{background:var(--crust);color:#fff;}
+  .empty-note{font-size:12px;color:var(--text-dim);margin-top:10px;}
+  .save-msg{font-size:11.5px;color:var(--good);margin-top:6px;height:14px;}
+
+  .autosave-badge{
+    position:fixed;right:18px;bottom:18px;z-index:50;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.02em;
+    background:var(--panel);border:1px solid var(--line);color:var(--text-dim);
+    padding:7px 14px;border-radius:999px;
+    opacity:0;transform:translateY(4px);pointer-events:none;
+    transition:opacity .2s, transform .2s;
+    box-shadow:0 10px 24px -8px rgba(0,0,0,0.55);
+  }
+  .autosave-badge.show{opacity:1;transform:translateY(0);}
+  .autosave-badge.ok{color:var(--good);border-color:var(--good);}
+  .autosave-badge.warn{color:var(--gold-bright);border-color:var(--gold);}
+  .autosave-badge.error{color:var(--bad);border-color:var(--crust);}
+
+  .ticket-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:10px;}
+  .line-cost-toggle{display:flex;align-items:center;gap:8px;font-family:'Inter';font-weight:600;font-size:12.5px;color:var(--text-dim);}
+
+  .print-btn{
+    display:flex;align-items:center;gap:7px;
+    font-family:'Inter';font-weight:600;font-size:12.5px;
+    background:var(--panel);border:1px solid var(--line);color:var(--text-dim);
+    padding:8px 14px;border-radius:999px;cursor:pointer;
+  }
+  .print-btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+  .print-btn svg{flex:none;}
+
+  /* pantry (global ingredient pricing) */
+  .pantry-row{padding:10px 0;border-bottom:1px solid var(--line);}
+  .pantry-row:last-of-type{border-bottom:none;}
+  .pantry-row-top{display:flex;align-items:center;gap:8px;}
+  .pantry-row-top input[type=text]{
+    flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-family:'Inter';font-size:13px;padding:7px 9px;border-radius:5px;min-width:0;
+  }
+  .pantry-row-top input[type=text]:focus{outline:none;border-color:var(--gold);}
+  .pantry-row-bottom{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .pantry-row-bottom input[type=number]{
+    width:64px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;
+    padding:7px 8px;border-radius:5px;
+  }
+  .pantry-row-bottom input[type=number]:focus{outline:none;border-color:var(--gold);}
+  .pantry-at{font-size:12px;color:var(--text-dim);}
+  .pantry-dollar{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-dim);}
+  .pantry-rate{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--gold-bright);white-space:nowrap;}
+  .add-pantry{
+    margin-top:10px;font-family:'Inter';font-weight:600;font-size:12.5px;
+    background:none;border:1px dashed var(--line);color:var(--text-dim);
+    padding:8px;border-radius:5px;cursor:pointer;width:100%;
+  }
+  .add-pantry:hover{border-color:var(--gold);color:var(--gold-bright);}
+  .pantry-add-row{display:flex;gap:8px;}
+  .pantry-add-row .add-pantry{margin-top:10px;width:auto;flex:1;}
+
+  /* compound pantry item (priced from component ingredients) */
+  .pantry-row.compound{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:8px 0;background:rgba(200,155,60,0.035);}
+  .compound-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-bright);border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap;}
+  .comp-list{margin:8px 0;display:flex;flex-direction:column;gap:6px;}
+  .comp-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .comp-row input[type=text]{flex:1;min-width:110px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'Inter';font-size:12.5px;padding:6px 8px;border-radius:5px;}
+  .comp-row input[type=number]{width:56px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;padding:6px 7px;border-radius:5px;}
+  .comp-row input:focus{outline:none;border-color:var(--gold);}
+  .comp-row select{font-size:12px;padding:6px;}
+  .comp-x,.comp-ea{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);}
+
+  /* pantry-name autocomplete dropdown */
+  .ac-menu{
+    position:absolute;z-index:200;
+    background:var(--panel-2);border:1px solid var(--gold);border-radius:6px;
+    box-shadow:0 14px 32px -10px rgba(0,0,0,0.7);
+    max-height:210px;overflow-y:auto;padding:4px;
+  }
+  .ac-menu.hidden{display:none;}
+  .ac-item{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:7px 10px;border-radius:4px;cursor:pointer;
+    font-family:'Inter';font-size:13px;color:var(--text);
+  }
+  .ac-item .ac-rate{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);white-space:nowrap;}
+  .ac-item.active,.ac-item:hover{background:rgba(200,155,60,0.2);}
+  .comp-row .cp-rm{width:20px;height:20px;flex:none;border-radius:50%;border:1px solid var(--line);background:none;color:var(--text-dim);cursor:pointer;font-size:11px;line-height:1;}
+  .comp-row .cp-rm:hover{border-color:var(--crust);color:var(--crust);}
+  .add-comp{font-family:'Inter';font-weight:600;font-size:11.5px;background:none;border:1px dashed var(--line);color:var(--text-dim);padding:6px;border-radius:5px;cursor:pointer;width:100%;}
+  .add-comp:hover{border-color:var(--gold);color:var(--gold-bright);}
+  .compound-summary{margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-dim);}
+  .compound-summary b{color:var(--gold-bright);}
+
+  /* data file connection */
+  .datafile-status{font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+  .datafile-status b{color:var(--good);}
+  .datafile-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+  .btn-secondary{
+    font-family:'Inter';font-weight:600;font-size:12.5px;
+    background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:5px;
+    padding:8px 14px;cursor:pointer;white-space:nowrap;
+  }
+  .btn-secondary:hover{border-color:var(--gold);color:var(--gold-bright);}
+
+  /* ticket cost line */
+  .cost-row{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--paper-dim);margin-top:6px;}
+  .cost-row .amt{font-weight:700;color:var(--paper-ink);}
+  .cost-row .per{font-weight:400;color:var(--paper-dim);margin-left:4px;}
+  .line-item .line-cost{font-weight:400;color:var(--paper-dim);font-size:0.85em;}
+
+  /* finished pie assembly cost */
+  .assembly-summary{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+  .assembly-line{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-dim);padding:3px 0;}
+  .assembly-line.sub{padding-left:10px;font-size:12px;}
+  .assembly-line.total{font-weight:700;color:var(--gold-bright);border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-size:14px;}
+
+  @media print{
+    body{background:#fff;}
+    .shell > header,
+    .col-inputs,
+    .ticket-toolbar,
+    .autosave-badge{ display:none !important; }
+    .grid{ display:block; }
+    .shell{ max-width:none; margin:0; padding:0; }
+    .ticket-wrap{ position:static; }
+    .ticket{
+      box-shadow:none;
+      border:none;
+      border-radius:0;
+      padding:0;
+      color:#000;
+      background:#fff;
+    }
+    .line-item .name, .line-item .amt, .line-item .line-cost, .total-row, .method, .cost-row, .cost-row .amt, .cost-row .per{ color:#000 !important; }
+    .perf{ background-image:none; height:1.5px; background:#000; margin:21px 0; }
+    .line-item .dots{ border-bottom-color:#999; transform:translateY(-4.5px); }
+    .total-row{ border-top-color:#000; }
+    @page{ margin:0.6in; }
+
+    /* text scaled 1.5x for print legibility */
+    .ticket-title{ font-size:30px; }
+    .ticket-sub{ font-size:16.5px; }
+    .line-item{ font-size:21px; padding:5.25px 0; }
+    .group-heading{ font-size:15.75px; margin:21px 0 6px; }
+    .total-row{ font-size:24px; padding-top:15px; margin-top:6px; }
+    .cost-row{ font-size:18px; margin-top:9px; }
+    .method{ font-size:17.25px; }
+    .method-title{ font-size:15.75px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C12 2 8 6 8 10.5C8 12.9853 9.79086 15 12 15C14.2091 15 16 12.9853 16 10.5C16 6 12 2 12 2Z" stroke="#C89B3C" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M12 15V22" stroke="#C89B3C" stroke-width="1.4"/>
+        <path d="M12 18C12 18 9 18 8 20" stroke="#C89B3C" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M12 18C12 18 15 18 16 20" stroke="#C89B3C" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <h1>Dough Lab</h1>
+        <div class="tag">baker's percentages &middot; live ticket</div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button id="tab-pizza" class="active">Pizza</button>
+      <button id="tab-bagel">Bagels</button>
+      <button id="tab-donut">Donuts</button>
+      <button id="tab-pantry">Pantry</button>
+    </div>
+  </header>
+
+  <div class="grid" id="main-grid">
+    <div class="col-inputs">
+
+      <div id="pantry-view" class="view-hidden">
+        <div class="panel" id="datafile-panel">
+          <p class="section-label">Data file</p>
+          <div class="datafile-status" id="datafile-status">Checking for a connected data file…</div>
+          <div class="datafile-actions" id="datafile-actions"></div>
+          <div class="datafile-actions" id="datafile-portable">
+            <button class="btn-secondary" id="export-btn">Export backup</button>
+            <button class="btn-secondary" id="import-btn">Import…</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <p class="section-label">Pantry (shared pricing)</p>
+          <div id="pantry-fields"></div>
+          <div class="pantry-add-row">
+            <button class="add-pantry" id="add-pantry-btn">+ Add simple item</button>
+            <button class="add-pantry" id="add-compound-btn">+ Add compound item</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="recipe-view">
+
+      <div class="panel">
+        <p class="section-label">Batch size</p>
+        <div class="scale-row">
+          <div class="field">
+            <label id="pieces-label">Balls</label>
+            <div class="inp-wrap"><input type="number" id="pieces" min="1" step="1" /></div>
+          </div>
+          <div class="field">
+            <label>Weight each</label>
+            <div class="inp-wrap"><input type="number" id="wpp" min="1" step="1" /><span class="unit">g</span></div>
+          </div>
+        </div>
+        <div class="flour-row">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <label style="font-size:13.5px;">Flour</label>
+            <button type="button" class="flour-auto-btn" id="flour-hint">Auto-Fit</button>
+          </div>
+          <div class="inp-wrap"><input type="number" id="f-flour" step="1" /><span class="unit">g</span></div>
+        </div>
+        <div class="toggle-row" style="border-top:1px solid var(--line);margin-top:4px;padding-top:12px;">
+          <div>
+            <label style="font-size:13.5px;">Scrap allowance</label>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="inp-wrap-inline subfields hidden" id="scrap-pct-row">
+              <input type="number" id="scrap-pct" step="0.5" min="0" class="mini-num" /><span class="unit mini-unit">%</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="scrap-enabled" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <p class="section-label">Formula (% of flour)</p>
+        <div id="pct-fields"></div>
+      </div>
+
+      <div class="panel">
+        <p class="section-label">Other ingredients</p>
+        <div id="extra-fields"></div>
+        <button class="add-extra" id="add-extra-btn">+ Add ingredient</button>
+      </div>
+
+      <div class="panel">
+        <div class="toggle-row">
+          <div>
+            <label style="font-size:13.5px;">Preferment / sponge</label>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="pf-enabled" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div id="pf-fields" class="subfields hidden"></div>
+      </div>
+
+      <div class="panel">
+        <p class="section-label">Method notes</p>
+        <textarea id="notes"></textarea>
+      </div>
+
+      <div class="panel" id="assembly-panel">
+        <p class="section-label">Finished pie cost</p>
+        <div id="assembly-fields"></div>
+        <button class="add-pantry" id="add-assembly-btn">+ Add topping</button>
+        <div class="assembly-summary" id="assembly-summary"></div>
+      </div>
+
+      <div class="panel">
+        <p class="section-label">Save this recipe</p>
+        <div class="save-row">
+          <input type="text" id="preset-name" placeholder="e.g. Friday night pizza" />
+          <button class="btn" id="save-btn">Save</button>
+        </div>
+        <div class="save-msg" id="save-msg"></div>
+        <div class="presets" id="preset-list"></div>
+        <div class="empty-note" id="preset-empty">No saved recipes yet — save one above to reload it any time.</div>
+      </div>
+
+      </div>
+
+    </div>
+
+    <div class="col-ticket" id="col-ticket">
+      <div class="ticket-wrap">
+        <div class="ticket-toolbar" id="ticket-toolbar">
+          <div class="line-cost-toggle">
+            <span>Show item costs</span>
+            <label class="switch">
+              <input type="checkbox" id="show-line-costs" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <button class="print-btn" id="print-btn" title="Print recipe card">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
+        </div>
+        <div class="ticket" id="ticket"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="autosave-badge" id="autosave-badge"></div>
+
+<script>
+(function(){
+
+/* ---------- default state per type, matching real recipes ---------- */
+function mkExtra(name, pct){ return { id:'e'+Math.random().toString(36).slice(2,9), name, pct }; }
+function mkAssemblyItem(name, qty, unit){ return { id:'top'+Math.random().toString(36).slice(2,9), name, qty, unit }; }
+
+const PF_METHODS = {
+  poolish: { label:'Poolish', pfPercent:20, pfHydration:100, pfYeast:0.15, pfHours:14, pfTemp:'room temp (68–70°F)' },
+  biga:    { label:'Biga',    pfPercent:45, pfHydration:55,  pfYeast:0.12, pfHours:16, pfTemp:'cool spot (60–65°F)' },
+  sponge:  { label:'Sponge',  pfPercent:56, pfHydration:null, pfYeast:0.78, pfHours:12, pfTemp:'room temp, overnight' },
+  custom:  { label:'Preferment' }
+};
+
+function defaultPizza(){
+  return {
+    type:'pizza',
+    hydration:66, salt:2, yeast:1, yeastType:'idy',
+    extras:[ mkExtra('EVOO',5), mkExtra('DMP',0.75), mkExtra('Malt syrup',2) ],
+    pfEnabled:false, pfMethod:'biga', pfPercent:45, pfHydration:55, pfYeast:0.12, pfHours:16, pfTemp:'cool spot (60–65°F)',
+    pieces:4, wpp:300,
+    flour:700, flourAuto:true,
+    recipeName:'',
+    notes:'Mix, bulk ferment, ball, cold retard in fridge 24–72h. Pull ~2h before baking to warm up, shape, and bake hot.',
+    assembly:[]
+  };
+}
+function defaultBagel(){
+  return {
+    type:'bagel',
+    hydration:62, salt:2.75, yeast:0.66, yeastType:'idy',
+    extras:[ mkExtra('DMP',0.75), mkExtra('Malt syrup',2) ],
+    pfEnabled:true, pfMethod:'sponge', pfPercent:56, pfHydration:111, pfYeast:0.78, pfHours:12, pfTemp:'room temp, overnight',
+    pieces:12, wpp:120,
+    flour:910, flourAuto:true,
+    recipeName:'',
+    notes:'Boil: water + malt syrup, ~45–60s per side.\nBake: 500°F — top rack 6 min, then bottom rack 6 min.'
+  };
+}
+function defaultDonut(){
+  // Yeast-raised (enriched) donut dough — the numbers are placeholders pending a real dial-in,
+  // like the pizza/bagel defaults were. Fits the yeast + baker's-% engine; cake donuts (baking-powder
+  // leavened) would not, so this is deliberately the raised style.
+  return {
+    type:'donut',
+    hydration:52, salt:1.5, yeast:1.5, yeastType:'idy',
+    extras:[ mkExtra('Sugar',12), mkExtra('Butter',10), mkExtra('Egg',10) ],
+    pfEnabled:false, pfMethod:'poolish', pfPercent:20, pfHydration:100, pfYeast:0.15, pfHours:12, pfTemp:'room temp, overnight',
+    pieces:12, wpp:60,
+    flour:400, flourAuto:true,
+    recipeName:'',
+    notes:'Mix enriched dough, bulk ferment ~1h. Roll ~1cm, cut. Proof until puffy (~45–60 min). Fry 350–375°F, ~60–90s per side. Glaze while warm.'
+  };
+}
+
+let state = { pizza: defaultPizza(), bagel: defaultBagel(), donut: defaultDonut() };
+let activeType = 'pizza';
+let showPantryView = false;
+let showLineCosts = false;
+let presets = [];
+let scrapOn = false;
+let scrapPct = 3;
+let pantry = [];
+let fileHandle = null;
+let fileName = '';
+
+const YEAST_FACTORS = { idy:1, ady:1.25, fresh:3 };
+const YEAST_LABELS = { idy:'Instant dry', ady:'Active dry', fresh:'Fresh / cake' };
+const UNIT_GRAMS = { g:1, kg:1000, oz:28.349523125, lb:453.59237 };
+
+function mkPantryItem(name, packageQty, packageUnit, packageCost){
+  return { id:'ing'+Math.random().toString(36).slice(2,9), name, packageQty, packageUnit, packageCost };
+}
+function mkCompoundItem(name){
+  return { id:'ing'+Math.random().toString(36).slice(2,9), name, kind:'compound', components:[] };
+}
+function mkComponent(name, quantity, qty, unit, cost){
+  return { id:'pc'+Math.random().toString(36).slice(2,9), name, quantity, qty, unit, cost };
+}
+/* count multiplier: absent (old data) = 1; an explicit numeric value (incl. 0) is honored. */
+function compQuantity(c){ return c.quantity == null ? 1 : (+c.quantity || 0); }
+
+/* ---------- storage: a JSON file on disk (via File System Access API), next to this HTML file ----------
+   Falls back gracefully (nothing persists) in browsers without the API — Chrome/Edge only. */
+let saveTimer = null;
+
+function setSaveBadge(text, cls){
+  const b = document.getElementById('autosave-badge');
+  if(!b) return;
+  b.textContent = text;
+  b.className = 'autosave-badge show' + (cls ? (' '+cls) : '');
+}
+function hideSaveBadgeSoon(delay){
+  clearTimeout(hideSaveBadgeSoon._t);
+  hideSaveBadgeSoon._t = setTimeout(()=>{
+    const b = document.getElementById('autosave-badge');
+    if(b) b.classList.remove('show');
+  }, delay || 1400);
+}
+
+/* small IndexedDB key/value store, just to remember the file handle across reloads */
+const IDB_NAME = 'doughlab-fs', IDB_STORE = 'handles';
+function idbOpen(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbSet(key, val){
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(val, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function idbGet(key){
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const rq = tx.objectStore(IDB_STORE).get(key);
+    rq.onsuccess = () => resolve(rq.result);
+    rq.onerror = () => reject(rq.error);
+  });
+}
+async function idbGetHandle(){ try{ return await idbGet('fileHandle'); }catch(e){ return null; } }
+async function idbSetHandle(h){ try{ await idbSet('fileHandle', h); }catch(e){ console.error('failed to remember file handle', e); } }
+
+function defaultDataShape(){
+  return {
+    pantry: [ mkPantryItem('Flour',0,'lb',0), mkPantryItem('Water',0,'lb',0), mkPantryItem('Salt',0,'lb',0), mkPantryItem('Yeast',0,'lb',0) ],
+    presets: [],
+    currentState: null
+  };
+}
+/* one-time migration path: if a brand-new/empty data file is connected, pull in whatever
+   was previously saved under the old localStorage keys so nothing gets lost. */
+function seedFromLocalStorage(data){
+  try{
+    const list = localStorage.getItem('presets-v2');
+    if(list){ const parsed = JSON.parse(list); if(Array.isArray(parsed)) data.presets = parsed; }
+  }catch(e){}
+  try{
+    const cur = localStorage.getItem('current-state-v2');
+    if(cur) data.currentState = JSON.parse(cur);
+  }catch(e){}
+  return data;
+}
+
+async function writeToHandle(handle, data){
+  const writable = await handle.createWritable();
+  await writable.write(JSON.stringify(data, null, 2));
+  await writable.close();
+}
+async function readAndApply(handle){
+  const file = await handle.getFile();
+  const text = await file.text();
+  let data;
+  if(!text || !text.trim()){
+    data = seedFromLocalStorage(defaultDataShape());
+    await writeToHandle(handle, data);
+  }else{
+    try{ data = JSON.parse(text); }
+    catch(e){ data = seedFromLocalStorage(defaultDataShape()); }
+  }
+  applyData(data);
+}
+function applyData(data){
+  pantry = Array.isArray(data.pantry) ? data.pantry : [];
+  presets = Array.isArray(data.presets) ? data.presets : [];
+  const cur = data.currentState;
+  if(cur){
+    if(cur.pizza) state.pizza = Object.assign(defaultPizza(), cur.pizza);
+    if(cur.bagel) state.bagel = Object.assign(defaultBagel(), cur.bagel);
+    if(cur.donut) state.donut = Object.assign(defaultDonut(), cur.donut);
+    if(cur.activeType) activeType = cur.activeType;
+    if(typeof cur.scrapOn === 'boolean') scrapOn = cur.scrapOn;
+    if(typeof cur.scrapPct === 'number') scrapPct = cur.scrapPct;
+    if(typeof cur.showLineCosts === 'boolean') showLineCosts = cur.showLineCosts;
+  }
+  refreshTabButtons();
+}
+
+/* One place that describes the full saved payload — used by file writes, localStorage, and Export. */
+function currentData(){
+  return { pantry, presets, currentState: {pizza:state.pizza, bagel:state.bagel, donut:state.donut, activeType, scrapOn, scrapPct, showLineCosts} };
+}
+
+/* Persistence routes on capability: desktop Chrome/Edge write the user's data file (File System
+   Access API); everywhere else (iPad Safari, Firefox…) auto-save to this browser's localStorage. */
+const HAS_FSA = !!window.showOpenFilePicker;
+const LOCAL_KEY = 'doughlab-data-v1';
+
+async function saveNow(){
+  if(HAS_FSA){
+    if(!fileHandle) return false;
+    try{
+      await writeToHandle(fileHandle, currentData());
+      setSaveBadge('Saved', 'ok');
+      hideSaveBadgeSoon();
+      return true;
+    }catch(e){
+      console.error('data file write failed', e);
+      setSaveBadge('Save failed — check file access', 'error');
+      return false;
+    }
+  }
+  try{
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(currentData()));
+    setSaveBadge('Saved', 'ok');
+    hideSaveBadgeSoon();
+    return true;
+  }catch(e){
+    console.error('localStorage write failed', e);
+    setSaveBadge('Save failed — storage full or blocked', 'error');
+    return false;
+  }
+}
+function scheduleSave(){
+  if(HAS_FSA && !fileHandle) return; // desktop: nothing to save until a file is connected
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 300);
+}
+function initLocalStorage(){
+  try{
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if(raw) applyData(JSON.parse(raw));
+  }catch(e){ console.warn('no on-device data yet, or localStorage unavailable', e); }
+  renderAll();
+  updateDatafileUI('local');
+}
+
+/* ---------- portable Export / Import (works on every platform; also the cross-device sync path) ---------- */
+function exportData(){
+  const blob = new Blob([JSON.stringify(currentData(), null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'dough-lab-data.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  setSaveBadge('Exported', 'ok'); hideSaveBadgeSoon();
+}
+function importData(){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'application/json,.json';
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data;
+      try{ data = JSON.parse(reader.result); }
+      catch(e){ setSaveBadge('Import failed — not valid JSON', 'error'); return; }
+      if(!confirm('Replace the current pantry and saved recipes with the imported file?')) return;
+      applyData(data);
+      renderAll();
+      saveNow();
+      setSaveBadge('Imported', 'ok'); hideSaveBadgeSoon();
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
+async function connectNew(){
+  try{
+    const handle = await window.showSaveFilePicker({
+      suggestedName:'dough-lab-data.json',
+      types:[{ description:'Dough Lab data', accept:{'application/json':['.json']} }]
+    });
+    await idbSetHandle(handle);
+    fileHandle = handle; fileName = handle.name;
+    await readAndApply(handle);
+    renderAll();
+    updateDatafileUI('connected');
+  }catch(e){ if(e.name !== 'AbortError') console.error(e); }
+}
+async function connectExisting(){
+  try{
+    const [handle] = await window.showOpenFilePicker({
+      types:[{ description:'Dough Lab data', accept:{'application/json':['.json']} }]
+    });
+    await idbSetHandle(handle);
+    fileHandle = handle; fileName = handle.name;
+    await readAndApply(handle);
+    renderAll();
+    updateDatafileUI('connected');
+  }catch(e){ if(e.name !== 'AbortError') console.error(e); }
+}
+async function reconnectPermission(handle){
+  try{
+    const perm = await handle.requestPermission({mode:'readwrite'});
+    if(perm === 'granted'){
+      fileHandle = handle; fileName = handle.name;
+      await readAndApply(handle);
+      renderAll();
+      updateDatafileUI('connected');
+    }else{
+      updateDatafileUI('reconnect', handle);
+    }
+  }catch(e){ console.error(e); updateDatafileUI('reconnect', handle); }
+}
+async function tryReconnect(){
+  if(!window.showOpenFilePicker){ updateDatafileUI('unsupported'); return; }
+  const handle = await idbGetHandle();
+  if(!handle){ updateDatafileUI('none'); return; }
+  fileName = handle.name;
+  const perm = await handle.queryPermission({mode:'readwrite'});
+  if(perm === 'granted'){
+    fileHandle = handle;
+    await readAndApply(handle);
+    renderAll();
+    updateDatafileUI('connected');
+  }else{
+    updateDatafileUI('reconnect', handle);
+  }
+}
+function updateDatafileUI(mode, pendingHandle){
+  const statusEl = document.getElementById('datafile-status');
+  const actionsEl = document.getElementById('datafile-actions');
+  if(mode === 'unsupported'){
+    statusEl.innerHTML = "This browser doesn't support direct file access (Chrome or Edge required) — nothing will be saved.";
+    actionsEl.innerHTML = '';
+    return;
+  }
+  if(mode === 'local'){
+    statusEl.innerHTML = "Auto-saving to this device (this browser's storage). Use <b>Export</b> / <b>Import</b> below to sync recipes with another device via a JSON file.";
+    actionsEl.innerHTML = '';
+    return;
+  }
+  if(mode === 'connected'){
+    statusEl.innerHTML = `Connected: <b>${escapeHtml(fileName)}</b>`;
+    actionsEl.innerHTML = `<button class="btn-secondary" id="df-switch">Use a different file</button>`;
+    document.getElementById('df-switch').onclick = connectExisting;
+  }else if(mode === 'reconnect'){
+    statusEl.innerHTML = `Connection to <b>${escapeHtml(fileName)}</b> needs to be reconfirmed.`;
+    actionsEl.innerHTML = `<button class="btn-secondary" id="df-reconnect">Reconnect</button><button class="btn-secondary" id="df-switch">Use a different file</button>`;
+    document.getElementById('df-reconnect').onclick = () => reconnectPermission(pendingHandle);
+    document.getElementById('df-switch').onclick = connectExisting;
+  }else{
+    statusEl.innerHTML = "Not connected — nothing will be saved until you connect a data file.";
+    actionsEl.innerHTML = `<button class="btn-secondary" id="df-create">Create data file</button><button class="btn-secondary" id="df-open">Open existing file</button>`;
+    document.getElementById('df-create').onclick = connectNew;
+    document.getElementById('df-open').onclick = connectExisting;
+  }
+}
+
+
+/* ---------- number helpers ---------- */
+function round(n, step){ return Math.round(n/step)*step; }
+function fmt(n){
+  const v = Math.round(n*10)/10;
+  return (v % 1 === 0) ? String(Math.round(v)) : v.toFixed(1);
+}
+
+/* ---------- calculation ---------- */
+function totalPctOf(s){
+  const yeastPct = s.yeast * (YEAST_FACTORS[s.yeastType] || 1);
+  const extrasPct = s.extras.reduce((sum,e)=> sum + (+e.pct || 0), 0);
+  return 100 + s.hydration + s.salt + yeastPct + extrasPct;
+}
+function autoFlourFor(s){
+  const target = s.pieces * s.wpp * (scrapOn ? (1 + scrapPct/100) : 1);
+  return target / (totalPctOf(s)/100);
+}
+function syncFlour(s){
+  if(s.flourAuto){
+    s.flour = round(autoFlourFor(s), 5);
+  }
+}
+
+function calc(s){
+  const yeastMult = YEAST_FACTORS[s.yeastType] || 1;
+  const yeastPct = s.yeast * yeastMult;
+  const flour = s.flour;
+  const water = flour * s.hydration/100;
+  const salt = flour * s.salt/100;
+  const yeastW = flour * yeastPct/100;
+  const extras = s.extras.map(e => ({ name: e.name || 'Ingredient', grams: flour * (+e.pct||0)/100 }));
+
+  let pf = null, final = { flour, water, salt, yeast:yeastW };
+  if(s.pfEnabled){
+    const pfFlour = flour * s.pfPercent/100;
+    // Sponge commits ALL the formula's water, by definition — hydration is derived, not set.
+    const pfHydrationEffective = (s.pfMethod === 'sponge')
+      ? (pfFlour > 0 ? (water / pfFlour * 100) : 0)
+      : s.pfHydration;
+    const pfWater = pfFlour * pfHydrationEffective/100;
+    const pfYeast = pfFlour * s.pfYeast/100;
+    pf = { flour:pfFlour, water:pfWater, yeast:pfYeast, hydrationEffective:pfHydrationEffective };
+    final = {
+      flour: flour - pfFlour,
+      water: water - pfWater,
+      salt: salt,
+      yeast: Math.max(0, yeastW - pfYeast)
+    };
+  }
+  const extrasTotal = extras.reduce((sum,e)=>sum+e.grams,0);
+  const totalWeight = flour + water + salt + yeastW + extrasTotal;
+  const targetWeight = s.pieces * s.wpp * (scrapOn ? (1 + scrapPct/100) : 1);
+  return { flour, water, salt, yeastW, extras, totalWeight, targetWeight, pf, final, yeastPct };
+}
+
+/* ---------- pantry cost calc: matches ticket line-item names against pantry entries ---------- */
+function compoundGrams(item){
+  return (item.components||[]).reduce((s,c)=> s + compQuantity(c)*(+c.qty||0)*(UNIT_GRAMS[c.unit]||1), 0);
+}
+function compoundCost(item){
+  return (item.components||[]).reduce((s,c)=> s + compQuantity(c)*(+c.cost||0), 0);
+}
+/* A pantry item's cost-per-gram — derived from its components if compound, else from its package. */
+function itemRatePerGram(item){
+  if(!item) return null;
+  if(item.kind === 'compound'){
+    const grams = compoundGrams(item), cost = compoundCost(item);
+    if(grams <= 0 || cost <= 0) return null;
+    return cost / grams;
+  }
+  const grams = (+item.packageQty||0) * (UNIT_GRAMS[item.packageUnit]||1);
+  if(grams <= 0 || !item.packageCost) return null;
+  return (+item.packageCost) / grams;
+}
+function pantryRatePerGram(name){
+  if(!name) return null;
+  const key = name.trim().toLowerCase();
+  const item = pantry.find(p => (p.name||'').trim().toLowerCase() === key);
+  return itemRatePerGram(item);
+}
+function calcCost(r){
+  let total = 0, matchedAny = false;
+  const items = [ ['Flour', r.flour], ['Water', r.water], ['Salt', r.salt], ['Yeast', r.yeastW] ];
+  r.extras.forEach(e => items.push([e.name, e.grams]));
+  items.forEach(([name, grams]) => {
+    const rate = pantryRatePerGram(name);
+    if(rate != null){ total += rate * grams; matchedAny = true; }
+  });
+  return matchedAny ? total : null;
+}
+function fmtMoney(n){ return '$' + n.toFixed(2); }
+function pantryRateLabel(p){
+  const rate = itemRatePerGram(p);
+  if(rate == null) return '';
+  return '≈ $' + (rate*1000).toFixed(3) + '/kg';
+}
+
+/* ---------- finished pie cost: dough ball (from the live ticket) + assembly toppings ---------- */
+function costPerPiece(s){
+  const total = calcCost(calc(s));
+  return total != null ? total / s.pieces : null;
+}
+function assemblyItemGrams(item){ return (+item.qty||0) * (UNIT_GRAMS[item.unit]||1); }
+function assemblyItemCost(item){
+  const rate = pantryRatePerGram(item.name);
+  return rate != null ? rate * assemblyItemGrams(item) : null;
+}
+function calcAssemblyTotal(assembly){
+  return assembly.reduce((sum, item) => {
+    const c = assemblyItemCost(item);
+    return c != null ? sum + c : sum;
+  }, 0);
+}
+
+/* ---------- render: percentage input fields ---------- */
+function renderPctFields(){
+  const s = state[activeType];
+  const el = document.getElementById('pct-fields');
+  el.innerHTML = `
+    <div class="field">
+      <label>Flour</label>
+      <div class="inp-wrap"><input type="number" value="100" disabled style="opacity:.5" /><span class="unit">%</span></div>
+    </div>
+    <div class="field">
+      <label>Water (hydration)</label>
+      <div class="inp-wrap"><input type="number" id="f-hydration" step="0.5" value="${s.hydration}" /><span class="unit">%</span></div>
+    </div>
+    <div class="field">
+      <label>Salt</label>
+      <div class="inp-wrap"><input type="number" id="f-salt" step="0.1" value="${s.salt}" /><span class="unit">%</span></div>
+    </div>
+    <div class="field">
+      <label>Yeast<span class="hint">Entered as instant dry — converted below</span></label>
+      <div class="inp-wrap">
+        <select id="f-yeastType">
+          <option value="idy" ${s.yeastType==='idy'?'selected':''}>IDY</option>
+          <option value="ady" ${s.yeastType==='ady'?'selected':''}>ADY</option>
+          <option value="fresh" ${s.yeastType==='fresh'?'selected':''}>Fresh</option>
+        </select>
+        <input type="number" id="f-yeast" step="0.1" value="${s.yeast}" /><span class="unit">%</span>
+      </div>
+    </div>
+  `;
+  document.getElementById('f-hydration').oninput = e => { s.hydration = +e.target.value || 0; onChange(); };
+  document.getElementById('f-salt').oninput = e => { s.salt = +e.target.value || 0; onChange(); };
+  document.getElementById('f-yeast').oninput = e => { s.yeast = +e.target.value || 0; onChange(); };
+  document.getElementById('f-yeastType').onchange = e => { s.yeastType = e.target.value; onChange(); };
+}
+
+function renderExtraFields(){
+  const s = state[activeType];
+  const el = document.getElementById('extra-fields');
+  if(s.extras.length === 0){
+    el.innerHTML = `<div class="empty-note" style="margin-top:0;">No extras — add oil, malt, sugar, DMP, whatever the recipe calls for.</div>`;
+  }else{
+    el.innerHTML = s.extras.map(e => `
+      <div class="extra-row" data-id="${e.id}">
+        <input type="text" class="ex-name" value="${e.name}" placeholder="Ingredient" />
+        <input type="number" class="ex-pct" step="0.1" value="${e.pct}" />
+        <span class="unit">%</span>
+        <button class="rm" title="Remove">✕</button>
+      </div>
+    `).join('');
+    el.querySelectorAll('.extra-row').forEach(row => {
+      const id = row.getAttribute('data-id');
+      const exNameInput = row.querySelector('.ex-name');
+      exNameInput.oninput = e => {
+        const ex = s.extras.find(x=>x.id===id); ex.name = e.target.value; onChange(false);
+      };
+      attachPantryAutocomplete(exNameInput, val => {
+        const ex = s.extras.find(x=>x.id===id); ex.name = val; onChange(false);
+      });
+      row.querySelector('.ex-pct').oninput = e => {
+        const ex = s.extras.find(x=>x.id===id); ex.pct = +e.target.value || 0; onChange();
+      };
+      row.querySelector('.rm').onclick = () => {
+        s.extras = s.extras.filter(x=>x.id!==id);
+        renderExtraFields();
+        onChange();
+      };
+    });
+  }
+}
+document.getElementById('add-extra-btn').onclick = () => {
+  const s = state[activeType];
+  s.extras.push(mkExtra('', 0));
+  renderExtraFields();
+  const rows = document.querySelectorAll('#extra-fields .ex-name');
+  if(rows.length) rows[rows.length-1].focus();
+  onChange();
+};
+
+function afterPantryChange(){ scheduleSave(); renderTicket(); renderAssemblySummary(); }
+function unitSelectHtml(cls, unit){
+  return `<select class="${cls}">
+    <option value="lb" ${unit==='lb'?'selected':''}>lb</option>
+    <option value="oz" ${unit==='oz'?'selected':''}>oz</option>
+    <option value="kg" ${unit==='kg'?'selected':''}>kg</option>
+    <option value="g" ${unit==='g'?'selected':''}>g</option>
+  </select>`;
+}
+function simpleRowHtml(p){
+  return `<div class="pantry-row" data-id="${p.id}">
+    <div class="pantry-row-top">
+      <input type="text" class="pn-name" value="${p.name}" placeholder="Ingredient (e.g. Flour)" />
+      <button class="rm" title="Remove">✕</button>
+    </div>
+    <div class="pantry-row-bottom">
+      <input type="number" class="pn-qty" step="0.1" min="0" value="${p.packageQty}" />
+      ${unitSelectHtml('pn-unit', p.packageUnit)}
+      <span class="pantry-at">for</span>
+      <span class="pantry-dollar">$</span>
+      <input type="number" class="pn-cost" step="0.01" min="0" value="${p.packageCost}" />
+      <span class="pantry-rate">${pantryRateLabel(p)}</span>
+    </div>
+  </div>`;
+}
+function componentRowHtml(c){
+  return `<div class="comp-row" data-cid="${c.id}">
+    <input type="text" class="cp-name" value="${c.name}" placeholder="Component" />
+    <input type="number" class="cp-quantity" step="1" min="0" value="${c.quantity != null ? c.quantity : 1}" title="Count" />
+    <span class="comp-x">×</span>
+    <input type="number" class="cp-qty" step="0.1" min="0" value="${c.qty}" title="Weight each" />
+    ${unitSelectHtml('cp-unit', c.unit)}
+    <span class="pantry-dollar">$</span>
+    <input type="number" class="cp-cost" step="0.01" min="0" value="${c.cost}" title="Cost each" />
+    <span class="comp-ea">ea</span>
+    <button class="rm cp-rm" title="Remove component">✕</button>
+  </div>`;
+}
+function compoundSummaryHtml(item){
+  const g = compoundGrams(item), c = compoundCost(item), rate = itemRatePerGram(item);
+  if(g <= 0 && c <= 0) return `<div class="compound-summary">Add components to price this item.</div>`;
+  return `<div class="compound-summary">${fmt(g)} g · ${fmtMoney(c)} batch${rate!=null ? ` · <b>≈ $${(rate*1000).toFixed(3)}/kg</b>` : ''}</div>`;
+}
+function compoundRowHtml(p){
+  return `<div class="pantry-row compound" data-id="${p.id}">
+    <div class="pantry-row-top">
+      <input type="text" class="pn-name" value="${p.name}" placeholder="Compound item (e.g. House Sauce)" />
+      <span class="compound-tag">compound</span>
+      <button class="rm" title="Remove">✕</button>
+    </div>
+    <div class="comp-list">${(p.components||[]).map(componentRowHtml).join('')}</div>
+    <button class="add-comp">+ Add component</button>
+    ${compoundSummaryHtml(p)}
+  </div>`;
+}
+function renderPantryFields(){
+  const el = document.getElementById('pantry-fields');
+  if(pantry.length === 0){
+    el.innerHTML = `<div class="empty-note" style="margin-top:0;">No pantry items yet — add flour, salt, yeast, oil, etc. with their retail price to see cost per batch. Name them to match a formula field (Flour, Water, Salt, Yeast) or an "Other ingredient" name (e.g. EVOO, DMP). A compound item (e.g. a house sauce) is priced from its own component ingredients.</div>`;
+    return;
+  }
+  el.innerHTML = pantry.map(p => p.kind === 'compound' ? compoundRowHtml(p) : simpleRowHtml(p)).join('');
+  pantry.forEach(item => {
+    const row = el.querySelector(`.pantry-row[data-id="${item.id}"]`);
+    if(!row) return;
+    row.querySelector('.pn-name').oninput = e => { item.name = e.target.value; afterPantryChange(); };
+    row.querySelector('.pantry-row-top .rm').onclick = () => {
+      pantry = pantry.filter(x=>x.id!==item.id);
+      renderPantryFields();
+      afterPantryChange();
+    };
+    if(item.kind === 'compound'){
+      wireCompoundRow(row, item);
+    }else{
+      const rateEl = row.querySelector('.pantry-rate');
+      row.querySelector('.pn-qty').oninput = e => { item.packageQty = +e.target.value || 0; rateEl.textContent = pantryRateLabel(item); afterPantryChange(); };
+      row.querySelector('.pn-unit').onchange = e => { item.packageUnit = e.target.value; rateEl.textContent = pantryRateLabel(item); afterPantryChange(); };
+      row.querySelector('.pn-cost').oninput = e => { item.packageCost = +e.target.value || 0; rateEl.textContent = pantryRateLabel(item); afterPantryChange(); };
+    }
+  });
+}
+function wireCompoundRow(row, item){
+  const refreshSummary = () => { row.querySelector('.compound-summary').outerHTML = compoundSummaryHtml(item); };
+  row.querySelector('.add-comp').onclick = () => {
+    item.components.push(mkComponent('', 1, 0, 'oz', 0));
+    renderPantryFields();
+    const newRow = document.querySelector(`#pantry-fields .pantry-row[data-id="${item.id}"]`);
+    const names = newRow ? newRow.querySelectorAll('.cp-name') : [];
+    if(names.length) names[names.length-1].focus();
+    scheduleSave();
+  };
+  row.querySelectorAll('.comp-row').forEach(cr => {
+    const cid = cr.getAttribute('data-cid');
+    const comp = item.components.find(c=>c.id===cid);
+    cr.querySelector('.cp-name').oninput = e => { comp.name = e.target.value; afterPantryChange(); };
+    cr.querySelector('.cp-quantity').oninput = e => { comp.quantity = +e.target.value || 0; refreshSummary(); afterPantryChange(); };
+    cr.querySelector('.cp-qty').oninput = e => { comp.qty = +e.target.value || 0; refreshSummary(); afterPantryChange(); };
+    cr.querySelector('.cp-unit').onchange = e => { comp.unit = e.target.value; refreshSummary(); afterPantryChange(); };
+    cr.querySelector('.cp-cost').oninput = e => { comp.cost = +e.target.value || 0; refreshSummary(); afterPantryChange(); };
+    cr.querySelector('.cp-rm').onclick = () => {
+      item.components = item.components.filter(c=>c.id!==cid);
+      renderPantryFields();
+      afterPantryChange();
+    };
+  });
+}
+document.getElementById('add-pantry-btn').onclick = () => {
+  pantry.push(mkPantryItem('', 0, 'lb', 0));
+  renderPantryFields();
+  const rows = document.querySelectorAll('#pantry-fields .pn-name');
+  if(rows.length) rows[rows.length-1].focus();
+  scheduleSave();
+};
+document.getElementById('add-compound-btn').onclick = () => {
+  pantry.push(mkCompoundItem(''));
+  renderPantryFields();
+  const rows = document.querySelectorAll('#pantry-fields .pn-name');
+  if(rows.length) rows[rows.length-1].focus();
+  scheduleSave();
+};
+
+function renderAssemblyFields(){
+  const panel = document.getElementById('assembly-panel');
+  const isPizza = activeType === 'pizza';
+  panel.classList.toggle('view-hidden', !isPizza);
+  if(!isPizza) return;
+  const s = state.pizza;
+  const el = document.getElementById('assembly-fields');
+  if(s.assembly.length === 0){
+    el.innerHTML = `<div class="empty-note" style="margin-top:0;">No toppings yet — add sauce, cheese, pepperoni, etc. (priced via the Pantry, matched by name) to price a finished pie.</div>`;
+  }else{
+    el.innerHTML = s.assembly.map(item => `
+      <div class="pantry-row" data-id="${item.id}">
+        <div class="pantry-row-top">
+          <input type="text" class="as-name" value="${item.name}" placeholder="Topping (e.g. Mozzarella)" />
+          <button class="rm" title="Remove">✕</button>
+        </div>
+        <div class="pantry-row-bottom">
+          <input type="number" class="as-qty" step="0.1" min="0" value="${item.qty}" />
+          <select class="as-unit">
+            <option value="oz" ${item.unit==='oz'?'selected':''}>oz</option>
+            <option value="g" ${item.unit==='g'?'selected':''}>g</option>
+            <option value="lb" ${item.unit==='lb'?'selected':''}>lb</option>
+            <option value="kg" ${item.unit==='kg'?'selected':''}>kg</option>
+          </select>
+          <span class="pantry-rate">${assemblyItemCost(item) != null ? fmtMoney(assemblyItemCost(item)) : ''}</span>
+        </div>
+      </div>
+    `).join('');
+    el.querySelectorAll('.pantry-row').forEach(row => {
+      const id = row.getAttribute('data-id');
+      const item = s.assembly.find(x=>x.id===id);
+      const rateEl = () => row.querySelector('.pantry-rate');
+      const refreshRate = () => { const c = assemblyItemCost(item); rateEl().textContent = c != null ? fmtMoney(c) : ''; };
+      const asNameInput = row.querySelector('.as-name');
+      asNameInput.oninput = e => { item.name = e.target.value; refreshRate(); renderAssemblySummary(); scheduleSave(); };
+      attachPantryAutocomplete(asNameInput, val => { item.name = val; refreshRate(); renderAssemblySummary(); scheduleSave(); });
+      row.querySelector('.as-qty').oninput = e => { item.qty = +e.target.value || 0; refreshRate(); renderAssemblySummary(); scheduleSave(); };
+      row.querySelector('.as-unit').onchange = e => { item.unit = e.target.value; refreshRate(); renderAssemblySummary(); scheduleSave(); };
+      row.querySelector('.rm').onclick = () => {
+        s.assembly = s.assembly.filter(x=>x.id!==id);
+        renderAssemblyFields();
+        renderAssemblySummary();
+        scheduleSave();
+      };
+    });
+  }
+  renderAssemblySummary();
+}
+document.getElementById('add-assembly-btn').onclick = () => {
+  state.pizza.assembly.push(mkAssemblyItem('', 0, 'oz'));
+  renderAssemblyFields();
+  const rows = document.querySelectorAll('#assembly-fields .as-name');
+  if(rows.length) rows[rows.length-1].focus();
+  scheduleSave();
+};
+function renderAssemblySummary(){
+  const el = document.getElementById('assembly-summary');
+  if(!el || activeType !== 'pizza') return;
+  const s = state.pizza;
+  const ballCost = costPerPiece(s);
+  const toppingsCost = calcAssemblyTotal(s.assembly);
+  let html = `<div class="assembly-line"><span>Dough ball</span><span>${ballCost!=null ? fmtMoney(ballCost) : '—'}</span></div>`;
+  s.assembly.forEach(item => {
+    const c = assemblyItemCost(item);
+    html += `<div class="assembly-line sub"><span>${escapeHtml(item.name || 'Topping')}</span><span>${c!=null ? fmtMoney(c) : '—'}</span></div>`;
+  });
+  html += `<div class="assembly-line total"><span>Pie cost</span><span>${ballCost!=null ? fmtMoney(ballCost + toppingsCost) : '—'}</span></div>`;
+  el.innerHTML = html;
+}
+
+function renderPfFields(){
+  const s = state[activeType];
+  const el = document.getElementById('pf-fields');
+  const isSponge = s.pfMethod === 'sponge';
+  const derivedHyd = isSponge ? calc(s).pf?.hydrationEffective : null;
+
+  const hydRow = isSponge
+    ? `<div class="field">
+         <label>Preferment hydration<span class="hint">Sponge uses all the formula's water — not set directly</span></label>
+         <div class="inp-wrap"><input type="text" id="pf-hyd-derived" value="${derivedHyd!=null ? fmt(derivedHyd) : '—'}" disabled style="opacity:.55;width:74px;text-align:right;" /><span class="unit">%</span></div>
+       </div>`
+    : `<div class="field">
+         <label>Preferment hydration<span class="hint">100% = classic poolish. Lower = stiffer biga.</span></label>
+         <div class="inp-wrap"><input type="number" id="pf-hyd" step="1" value="${s.pfHydration}" /><span class="unit">%</span></div>
+       </div>`;
+
+  el.innerHTML = `
+    <div class="field">
+      <label>Method</label>
+      <div class="inp-wrap">
+        <select id="pf-method">
+          <option value="poolish" ${s.pfMethod==='poolish'?'selected':''}>Poolish</option>
+          <option value="biga" ${s.pfMethod==='biga'?'selected':''}>Biga</option>
+          <option value="sponge" ${s.pfMethod==='sponge'?'selected':''}>Sponge</option>
+          <option value="custom" ${s.pfMethod==='custom'?'selected':''}>Custom</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Flour into preferment</label>
+      <div class="inp-wrap"><input type="number" id="pf-pct" step="1" value="${s.pfPercent}" /><span class="unit">%</span></div>
+    </div>
+    ${hydRow}
+    <div class="field">
+      <label>Yeast in preferment<span class="hint">% of the preferment's flour</span></label>
+      <div class="inp-wrap"><input type="number" id="pf-yeast" step="0.05" value="${s.pfYeast}" /><span class="unit">%</span></div>
+    </div>
+    <div class="field">
+      <label>Build time</label>
+      <div class="inp-wrap"><input type="number" id="pf-hours" step="1" value="${s.pfHours}" /><span class="unit">h</span></div>
+    </div>
+    <div class="field">
+      <label>Where</label>
+      <div class="inp-wrap"><input type="text" id="pf-temp" value="${s.pfTemp}" style="width:170px;text-align:left;font-family:Inter;font-size:13px;" /></div>
+    </div>
+  `;
+  document.getElementById('pf-method').onchange = e => {
+    const method = e.target.value;
+    s.pfMethod = method;
+    const preset = PF_METHODS[method];
+    if(preset && method !== 'custom'){
+      s.pfPercent = preset.pfPercent;
+      s.pfYeast = preset.pfYeast;
+      s.pfHours = preset.pfHours;
+      s.pfTemp = preset.pfTemp;
+      if(preset.pfHydration != null) s.pfHydration = preset.pfHydration;
+    }
+    renderPfFields();
+    onChange();
+  };
+  document.getElementById('pf-pct').oninput = e => { s.pfPercent = +e.target.value || 0; onChange(); };
+  if(!isSponge){
+    document.getElementById('pf-hyd').oninput = e => { s.pfHydration = +e.target.value || 0; onChange(); };
+  }
+  document.getElementById('pf-yeast').oninput = e => { s.pfYeast = +e.target.value || 0; onChange(); };
+  document.getElementById('pf-hours').oninput = e => { s.pfHours = +e.target.value || 0; onChange(); };
+  document.getElementById('pf-temp').oninput = e => { s.pfTemp = e.target.value; onChange(); };
+}
+
+function renderScaleFields(){
+  const s = state[activeType];
+  document.getElementById('pieces-label').textContent = ({bagel:'Bagels', donut:'Donuts'})[activeType] || 'Balls';
+  document.getElementById('pieces').value = s.pieces;
+  document.getElementById('wpp').value = s.wpp;
+  document.getElementById('f-flour').value = s.flour;
+  const hint = document.getElementById('flour-hint');
+  hint.disabled = s.flourAuto;
+  hint.onclick = () => { s.flourAuto = true; onChange(); };
+}
+
+function renderNotes(){
+  document.getElementById('notes').value = state[activeType].notes;
+}
+
+/* ---------- render: ticket ---------- */
+function renderTicket(){
+  const s = state[activeType];
+  const r = calc(s);
+  const driftsFromTarget = Math.abs(r.totalWeight - r.targetWeight) > 0.5;
+
+  let html = '';
+  const titleText = (s.recipeName && s.recipeName.trim())
+    ? s.recipeName.trim()
+    : (({bagel:'Bagel Dough', donut:'Donut Dough'})[activeType] || 'Pizza Dough');
+  html += `<div class="ticket-title">${escapeHtml(titleText)}</div>`;
+  html += `<div class="ticket-sub">${s.pieces} × ${fmt(s.wpp)}g target`;
+  if(scrapOn) html += ` <b>+${fmt(scrapPct)}% scrap</b>`;
+  if(driftsFromTarget) html += ` &nbsp;·&nbsp; <b>${fmt(round(r.totalWeight,1))}g actual</b>`;
+  html += ` &nbsp;·&nbsp; ${fmt(s.hydration)}% hydration</div>`;
+  html += `<div class="perf"></div>`;
+
+  if(r.pf){
+    const pfLabel = (PF_METHODS[s.pfMethod] && PF_METHODS[s.pfMethod].label) || 'Preferment';
+    html += `<div class="group-heading">${pfLabel} — ${fmt(r.pf.hydrationEffective)}% hydration, build ${fmt(s.pfHours)}h ahead, ${s.pfTemp}</div>`;
+    html += line('Flour', r.pf.flour, true);
+    html += line('Water', r.pf.water, true);
+    html += line('Yeast', r.pf.yeast, true);
+
+    html += `<div class="group-heading">Final mix — add to ripe ${pfLabel.toLowerCase()}</div>`;
+    html += line('Flour', r.final.flour);
+    html += line('Water', r.final.water);
+    html += line('Salt', r.final.salt);
+    if(r.final.yeast > 0.05) html += line('Yeast', r.final.yeast);
+    r.extras.forEach(e => { if(e.grams > 0) html += line(e.name, e.grams); });
+  }else{
+    html += `<div class="group-heading">Mix</div>`;
+    html += line('Flour', r.flour);
+    html += line('Water', r.water);
+    html += line('Salt', r.salt);
+    html += line('Yeast', r.yeastW);
+    r.extras.forEach(e => { if(e.grams > 0) html += line(e.name, e.grams); });
+  }
+
+  html += `<div class="total-row"><span>Total dough</span><span>${fmt(round(r.totalWeight,1))} g</span></div>`;
+
+  const cost = calcCost(r);
+  if(cost != null){
+    html += `<div class="cost-row"><span>Est. cost</span><span class="amt">${fmtMoney(cost)}<span class="per"> (${fmtMoney(cost / s.pieces)}/ea)</span></span></div>`;
+  }
+
+  html += `<div class="method-block">`;
+  html += `<div class="method-title">Yeast note</div>`;
+  html += `<div class="method">Percentages are entered as ${YEAST_LABELS[s.yeastType]}${s.yeastType!=='idy' ? ` (×${YEAST_FACTORS[s.yeastType]} vs. instant dry)` : ''}. Effective yeast: <b>${fmt(s.yeast * YEAST_FACTORS[s.yeastType])}%</b> of total flour.</div>`;
+  html += `</div>`;
+
+  if(s.notes && s.notes.trim()){
+    html += `<div class="method-block">`;
+    html += `<div class="method-title">Method</div>`;
+    html += `<div class="method">${escapeHtml(s.notes)}</div>`;
+    html += `</div>`;
+  }
+
+  document.getElementById('ticket').innerHTML = html;
+
+  function line(name, grams, sub){
+    const precision = 1;
+    let costHtml = '';
+    if(showLineCosts){
+      const rate = pantryRatePerGram(name);
+      if(rate != null) costHtml = ` <span class="line-cost">(${fmtMoney(rate*grams)})</span>`;
+    }
+    return `<div class="line-item${sub?' sub':''}"><span class="name">${escapeHtml(name)}</span><span class="dots"></span><span class="amt">${fmt(round(grams,precision))} g${costHtml}</span></div>`;
+  }
+}
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ---------- ingredient-name autocomplete, sourced from Pantry item names ---------- */
+function pantryNameSuggestions(query){
+  const seen = new Set(), out = [];
+  const q = (query||'').trim().toLowerCase();
+  pantry.forEach(p => {
+    const name = (p.name||'').trim();
+    if(!name) return;
+    const key = name.toLowerCase();
+    if(seen.has(key)) return;
+    if(q && !key.includes(q)) return;
+    seen.add(key);
+    out.push({ name, rate: itemRatePerGram(p) });
+  });
+  return out;
+}
+let acEl = null, acInput = null, acCommit = null, acActive = -1, acMatches = [];
+function ensureAcEl(){
+  if(acEl) return acEl;
+  acEl = document.createElement('div');
+  acEl.className = 'ac-menu hidden';
+  acEl.addEventListener('mousedown', e => e.preventDefault()); // don't blur the input on menu click
+  document.body.appendChild(acEl);
+  return acEl;
+}
+function positionAc(){
+  const r = acInput.getBoundingClientRect();
+  acEl.style.left = (r.left + window.scrollX) + 'px';
+  acEl.style.top = (r.bottom + window.scrollY + 4) + 'px';
+  acEl.style.width = r.width + 'px';
+}
+function renderAc(){
+  if(!acInput) return;
+  acMatches = pantryNameSuggestions(acInput.value);
+  if(acMatches.length === 0){ closeAc(); return; }
+  ensureAcEl();
+  acEl.innerHTML = acMatches.map((m,i) =>
+    `<div class="ac-item${i===acActive?' active':''}" data-i="${i}"><span>${escapeHtml(m.name)}</span>${m.rate!=null?`<span class="ac-rate">$${(m.rate*1000).toFixed(2)}/kg</span>`:''}</div>`
+  ).join('');
+  acEl.querySelectorAll('.ac-item').forEach(it => {
+    it.onmousedown = e => { e.preventDefault(); selectAc(+it.getAttribute('data-i')); };
+  });
+  acEl.classList.remove('hidden');
+  positionAc();
+}
+function openAc(input, commit){ acInput = input; acCommit = commit; acActive = -1; renderAc(); }
+function selectAc(i){
+  const m = acMatches[i]; if(!m) return;
+  const input = acInput, commit = acCommit;
+  input.value = m.name;
+  closeAc();
+  if(commit) commit(m.name);
+}
+function closeAc(){ if(acEl) acEl.classList.add('hidden'); acInput = null; acCommit = null; acActive = -1; acMatches = []; }
+function acKeydown(e){
+  if(!acEl || acEl.classList.contains('hidden')) return;
+  if(e.key === 'ArrowDown'){ e.preventDefault(); acActive = Math.min(acActive+1, acMatches.length-1); syncAcActive(); }
+  else if(e.key === 'ArrowUp'){ e.preventDefault(); acActive = Math.max(acActive-1, 0); syncAcActive(); }
+  else if(e.key === 'Enter' && acActive >= 0){ e.preventDefault(); selectAc(acActive); }
+  else if(e.key === 'Escape'){ closeAc(); }
+}
+function syncAcActive(){
+  acEl.querySelectorAll('.ac-item').forEach((it,i)=> it.classList.toggle('active', i===acActive));
+  const a = acEl.querySelector('.ac-item.active');
+  if(a) a.scrollIntoView({block:'nearest'});
+}
+function attachPantryAutocomplete(input, commit){
+  const open = () => openAc(input, commit);
+  input.addEventListener('focus', open);
+  input.addEventListener('input', open); // reopen on every keystroke, even if a prior render found 0 matches and closed
+  input.addEventListener('keydown', acKeydown);
+  input.addEventListener('blur', () => setTimeout(()=>{ if(acInput === input) closeAc(); }, 120));
+}
+
+/* ---------- presets UI ---------- */
+function renderPresets(){
+  const wrap = document.getElementById('preset-list');
+  const empty = document.getElementById('preset-empty');
+  wrap.innerHTML = '';
+  if(presets.length === 0){ empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  presets.forEach(p => {
+    const chip = document.createElement('div');
+    chip.className = 'preset-chip';
+    chip.innerHTML = `<span>${escapeHtml(p.name)} <span style="color:var(--text-dim)">· ${p.type}</span></span><span class="x">✕</span>`;
+    chip.querySelector('span:first-child').onclick = () => loadPreset(p);
+    chip.querySelector('.x').onclick = (e) => { e.stopPropagation(); deletePreset(p.id); };
+    wrap.appendChild(chip);
+  });
+}
+function loadPreset(p){
+  activeType = p.type;
+  const base = { bagel:defaultBagel, donut:defaultDonut, pizza:defaultPizza }[p.type] || defaultPizza;
+  state[p.type] = Object.assign(base(), JSON.parse(JSON.stringify(p.state)));
+  renderAll();
+  scheduleSave();
+}
+function deletePreset(id){
+  presets = presets.filter(p => p.id !== id);
+  scheduleSave();
+  renderPresets();
+}
+document.getElementById('save-btn').onclick = async () => {
+  const nameInput = document.getElementById('preset-name');
+  const name = nameInput.value.trim();
+  const msg = document.getElementById('save-msg');
+  if(!name){ msg.textContent = 'Give it a name first.'; msg.style.color = 'var(--bad)'; return; }
+  state[activeType].recipeName = name;
+  const id = 'p_' + Date.now();
+  const newPreset = { id, name, type: activeType, state: JSON.parse(JSON.stringify(state[activeType])) };
+  presets.push(newPreset);
+  renderTicket();
+  const ok = await saveNow();
+  if(ok){
+    nameInput.value = '';
+    msg.textContent = 'Saved.'; msg.style.color = 'var(--good)';
+    setTimeout(()=>{ msg.textContent=''; }, 2200);
+  }else{
+    presets = presets.filter(p => p.id !== id); // roll back — it didn't actually persist
+    msg.textContent = 'Save failed — try again.'; msg.style.color = 'var(--bad)';
+  }
+  renderPresets();
+};
+
+document.getElementById('print-btn').onclick = () => { window.print(); };
+document.getElementById('export-btn').onclick = exportData;
+document.getElementById('import-btn').onclick = importData;
+
+/* ---------- wiring ---------- */
+function onChange(resyncFlour){
+  const s = state[activeType];
+  if(resyncFlour !== false) syncFlour(s);
+  document.getElementById('f-flour').value = s.flour;
+  document.getElementById('flour-hint').disabled = s.flourAuto;
+  const derivedEl = document.getElementById('pf-hyd-derived');
+  if(derivedEl && s.pfEnabled && s.pfMethod === 'sponge'){
+    derivedEl.value = fmt(calc(s).pf.hydrationEffective);
+  }
+  renderTicket();
+  renderAssemblySummary();
+  scheduleSave();
+}
+
+const DOUGH_TABS = ['pizza','bagel','donut'];
+DOUGH_TABS.forEach(t => document.getElementById('tab-'+t).onclick = () => switchTab(t));
+document.getElementById('tab-pantry').onclick = () => switchTab('pantry');
+function refreshTabButtons(){
+  DOUGH_TABS.forEach(t => document.getElementById('tab-'+t).classList.toggle('active', !showPantryView && activeType===t));
+  document.getElementById('tab-pantry').classList.toggle('active', showPantryView);
+}
+function switchTab(t){
+  showPantryView = (t === 'pantry');
+  if(!showPantryView) activeType = t;
+  refreshTabButtons();
+  updateViewVisibility();
+  renderAll();
+  scheduleSave();
+}
+function updateViewVisibility(){
+  document.getElementById('pantry-view').classList.toggle('view-hidden', !showPantryView);
+  document.getElementById('recipe-view').classList.toggle('view-hidden', showPantryView);
+  document.getElementById('col-ticket').classList.toggle('view-hidden', showPantryView);
+  document.getElementById('ticket-toolbar').classList.toggle('view-hidden', showPantryView);
+  document.getElementById('main-grid').classList.toggle('pantry-active', showPantryView);
+}
+
+document.getElementById('show-line-costs').onchange = e => {
+  showLineCosts = e.target.checked;
+  renderTicket();
+  scheduleSave();
+};
+
+document.getElementById('pf-enabled').onchange = e => {
+  state[activeType].pfEnabled = e.target.checked;
+  document.getElementById('pf-fields').classList.toggle('hidden', !e.target.checked);
+  onChange();
+};
+
+document.getElementById('scrap-enabled').onchange = e => {
+  scrapOn = e.target.checked;
+  document.getElementById('scrap-pct-row').classList.toggle('hidden', !scrapOn);
+  onChange();
+};
+document.getElementById('scrap-pct').oninput = e => {
+  scrapPct = Math.max(0, +e.target.value || 0);
+  onChange();
+};
+
+document.getElementById('pieces').oninput = e => { state[activeType].pieces = Math.max(1, +e.target.value || 1); onChange(); };
+document.getElementById('wpp').oninput = e => { state[activeType].wpp = Math.max(1, +e.target.value || 1); onChange(); };
+document.getElementById('f-flour').oninput = e => {
+  const s = state[activeType];
+  s.flour = Math.max(1, +e.target.value || 1);
+  s.flourAuto = false;
+  onChange(false);
+};
+document.getElementById('notes').oninput = e => { state[activeType].notes = e.target.value; onChange(false); };
+
+function renderAll(){
+  const s = state[activeType];
+  document.getElementById('scrap-enabled').checked = scrapOn;
+  document.getElementById('scrap-pct').value = scrapPct;
+  document.getElementById('scrap-pct-row').classList.toggle('hidden', !scrapOn);
+  document.getElementById('show-line-costs').checked = showLineCosts;
+  syncFlour(s);
+  renderPctFields();
+  renderExtraFields();
+  document.getElementById('pf-enabled').checked = s.pfEnabled;
+  document.getElementById('pf-fields').classList.toggle('hidden', !s.pfEnabled);
+  renderPfFields();
+  renderScaleFields();
+  renderNotes();
+  renderTicket();
+  renderPresets();
+  renderPantryFields();
+  renderAssemblyFields();
+}
+
+/* ---------- boot ---------- */
+(function init(){
+  refreshTabButtons();
+  updateViewVisibility();
+  renderAll();
+  if(HAS_FSA) tryReconnect();
+  else initLocalStorage();
+})();
+
+})();
+</script>
+</body>
+</html>
