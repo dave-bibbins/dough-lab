@@ -83,7 +83,7 @@
   .tabs button.active{background:var(--gold);color:#20180a;}
 
   .grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:22px;align-items:start;}
-  .grid.pantry-active{grid-template-columns:1fr;}
+  .grid.solo-view{grid-template-columns:1fr;}
   @media (max-width:860px){.grid{grid-template-columns:1fr;}}
 
   .view-hidden{display:none !important;}
@@ -410,6 +410,60 @@
   .assembly-line.sub{padding-left:10px;font-size:12px;}
   .assembly-line.total{font-weight:700;color:var(--gold-bright);border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-size:14px;}
 
+  /* ---------- recipe box ---------- */
+  .recipes-layout{display:grid;grid-template-columns:1.05fr 0.95fr;gap:22px;align-items:start;}
+  @media (max-width:860px){.recipes-layout{grid-template-columns:1fr;}}
+  .recipe-chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .recipe-chip{display:flex;align-items:center;gap:7px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 13px;font-size:12.5px;cursor:pointer;color:var(--text);}
+  .recipe-chip:hover{border-color:var(--gold);}
+  .recipe-chip.active{border-color:var(--gold);color:var(--gold-bright);background:rgba(200,155,60,0.12);}
+  .recipe-chip .x{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:12px;line-height:1;}
+  .recipe-chip .x:hover{background:var(--crust);color:#fff;}
+  .rec-name-input{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'Fraunces',serif;font-weight:600;font-size:18px;padding:9px 11px;border-radius:5px;}
+  .rec-name-input:focus{outline:none;border-color:var(--gold);}
+  .rec-temp-row{display:flex;align-items:center;gap:8px;margin-top:12px;}
+  .rec-temp-row input{width:80px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;padding:7px 8px;border-radius:5px;}
+  .rec-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .rec-row:last-of-type{border-bottom:none;}
+  .rec-row input,.rec-row select{background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'Inter';font-size:13px;padding:7px 8px;border-radius:5px;min-width:0;}
+  .rec-row input:focus,.rec-row select:focus,.rec-step textarea:focus{outline:none;border-color:var(--gold);}
+  .rec-amt{width:52px;text-align:right;font-family:'IBM Plex Mono',monospace !important;}
+  .rec-unit{font-size:12px;padding:7px 5px;}
+  .rec-iname{flex:2;min-width:120px;}
+  .rec-note{flex:2;min-width:120px;font-style:italic;}
+  .rec-eqname{flex:1;min-width:140px;}
+  .rec-opt{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-dim);white-space:nowrap;}
+  .rec-rm{width:20px;height:20px;flex:none;border-radius:50%;border:1px solid var(--line);background:none;color:var(--text-dim);cursor:pointer;font-size:11px;line-height:1;}
+  .rec-rm:hover{border-color:var(--crust);color:var(--crust);}
+  .rec-step{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line);}
+  .rec-step:last-of-type{border-bottom:none;}
+  .rec-step .num{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold-bright);padding-top:9px;min-width:18px;}
+  .rec-step textarea{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'Inter';font-size:13px;line-height:1.5;padding:7px 9px;border-radius:5px;resize:vertical;min-height:38px;}
+  .rec-add{margin-top:10px;font-family:'Inter';font-weight:600;font-size:12px;background:none;border:1px dashed var(--line);color:var(--text-dim);padding:7px;border-radius:5px;cursor:pointer;width:100%;}
+  .rec-add:hover{border-color:var(--gold);color:var(--gold-bright);}
+  .rec-editor-foot{display:flex;justify-content:flex-end;margin-top:16px;}
+  .rec-delete{font-family:'Inter';font-weight:600;font-size:11.5px;background:none;border:1px solid var(--line);color:var(--text-dim);padding:6px 12px;border-radius:5px;cursor:pointer;}
+  .rec-delete:hover{border-color:var(--crust);color:var(--crust);}
+  /* scaled card (reuses .ticket paper look) */
+  .recipe-card-wrap{position:sticky;top:20px;}
+  .recipe-scale-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .recipe-scale-bar .lbl{font-family:'Inter';font-weight:600;font-size:12.5px;color:var(--text-dim);margin-right:2px;}
+  .scale-btn{font-family:'Inter';font-weight:600;font-size:12.5px;background:var(--panel);border:1px solid var(--line);color:var(--text-dim);padding:6px 13px;border-radius:999px;cursor:pointer;}
+  .scale-btn:hover{border-color:var(--gold);}
+  .scale-btn.active{background:var(--gold);color:#20180a;border-color:var(--gold);}
+  .rc-temp{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--paper-dim);letter-spacing:.03em;margin-bottom:14px;}
+  .rc-temp b{color:var(--crust);}
+  .rc-section{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--crust);margin:16px 0 6px;font-weight:600;}
+  .rc-ing{display:flex;gap:12px;font-size:14px;padding:3px 0;align-items:baseline;}
+  .rc-ing .amt{font-weight:600;white-space:nowrap;font-family:'IBM Plex Mono',monospace;min-width:78px;color:var(--paper-ink);}
+  .rc-ing .body .nm{color:var(--paper-ink);}
+  .rc-ing .body .nt{display:block;font-size:11.5px;font-style:italic;color:var(--paper-dim);}
+  .rc-equip{font-size:13px;padding:2px 0;color:var(--paper-ink);}
+  .rc-equip .opt{color:var(--paper-dim);font-style:italic;font-size:11.5px;}
+  .rc-step{display:flex;gap:9px;font-size:13px;line-height:1.5;padding:5px 0;color:var(--paper-ink);}
+  .rc-step .n{font-weight:700;color:var(--crust);min-width:16px;}
+  .rc-empty{font-size:12.5px;color:var(--paper-dim);}
+
   @media print{
     body{background:#fff;}
     .shell > header,
@@ -465,6 +519,7 @@
       <button id="tab-pizza" class="active">Pizza</button>
       <button id="tab-bagel">Bagels</button>
       <button id="tab-donut">Donuts</button>
+      <button id="tab-recipes">Recipes</button>
       <button id="tab-pantry">Pantry</button>
     </div>
   </header>
@@ -489,6 +544,22 @@
           <div class="pantry-add-row">
             <button class="add-pantry" id="add-pantry-btn">+ Add simple item</button>
             <button class="add-pantry" id="add-compound-btn">+ Add compound item</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="recipes-view" class="view-hidden">
+        <div class="recipes-layout">
+          <div class="recipe-editor-col">
+            <div class="panel">
+              <p class="section-label">Recipe box</p>
+              <div class="recipe-chips" id="recipe-chips"></div>
+              <button class="add-extra" id="new-recipe-btn" style="margin-top:12px;">+ New recipe</button>
+            </div>
+            <div id="recipe-editor-panel"></div>
+          </div>
+          <div class="recipe-card-col">
+            <div id="recipe-card-area"></div>
           </div>
         </div>
       </div>
@@ -669,14 +740,24 @@ function defaultDonut(){
 
 let state = { pizza: defaultPizza(), bagel: defaultBagel(), donut: defaultDonut() };
 let activeType = 'pizza';
-let showPantryView = false;
+let currentView = 'dough'; // 'dough' | 'pantry' | 'recipes'
 let showLineCosts = false;
 let presets = [];
 let scrapOn = false;
 let scrapPct = 3;
 let pantry = [];
+let recipes = [];
+let activeRecipeId = null;
 let fileHandle = null;
 let fileName = '';
+
+/* ---------- recipe box (general scalable recipes, separate from the dough engine) ---------- */
+function rid(p){ return p + Math.random().toString(36).slice(2,9); }
+function mkRecipe(name){ return { id:rid('rec'), name:name||'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[] }; }
+function mkRecipeIng(){ return { id:rid('ri'), amount:'', unit:'', name:'', note:'' }; }
+function mkEquip(){ return { id:rid('eq'), name:'', optional:false }; }
+function mkStep(){ return { id:rid('st'), text:'' }; }
+const RECIPE_UNITS = ['','cup','cups','tbsp','tsp','oz','lb','g','kg','mL','L','pinch','clove','can'];
 
 const YEAST_FACTORS = { idy:1, ady:1.25, fresh:3 };
 const YEAST_LABELS = { idy:'Instant dry', ady:'Active dry', fresh:'Fresh / cake' };
@@ -785,6 +866,7 @@ async function readAndApply(handle){
 function applyData(data){
   pantry = Array.isArray(data.pantry) ? data.pantry : [];
   presets = Array.isArray(data.presets) ? data.presets : [];
+  recipes = Array.isArray(data.recipes) ? data.recipes : [];
   const cur = data.currentState;
   if(cur){
     if(cur.pizza) state.pizza = Object.assign(defaultPizza(), cur.pizza);
@@ -794,13 +876,15 @@ function applyData(data){
     if(typeof cur.scrapOn === 'boolean') scrapOn = cur.scrapOn;
     if(typeof cur.scrapPct === 'number') scrapPct = cur.scrapPct;
     if(typeof cur.showLineCosts === 'boolean') showLineCosts = cur.showLineCosts;
+    if(cur.activeRecipeId) activeRecipeId = cur.activeRecipeId;
   }
+  if(!recipes.find(r => r.id === activeRecipeId)) activeRecipeId = recipes[0] ? recipes[0].id : null;
   refreshTabButtons();
 }
 
 /* One place that describes the full saved payload — used by file writes, localStorage, and Export. */
 function currentData(){
-  return { pantry, presets, currentState: {pizza:state.pizza, bagel:state.bagel, donut:state.donut, activeType, scrapOn, scrapPct, showLineCosts} };
+  return { pantry, presets, recipes, currentState: {pizza:state.pizza, bagel:state.bagel, donut:state.donut, activeType, scrapOn, scrapPct, showLineCosts, activeRecipeId} };
 }
 
 /* Persistence routes on capability: desktop Chrome/Edge write the user's data file (File System
@@ -1687,27 +1771,219 @@ function onChange(resyncFlour){
   scheduleSave();
 }
 
+/* ---------- recipe box: amount parsing / fraction display ---------- */
+function parseAmount(str){
+  if(str == null) return null;
+  const s = String(str).trim();
+  if(s === '') return null;
+  let m = s.match(/^(\d+)\s+(\d+)\/(\d+)$/); // "1 1/2"
+  if(m) return (+m[1]) + (+m[2])/(+m[3]);
+  m = s.match(/^(\d+)\/(\d+)$/);             // "3/4"
+  if(m) return (+m[1])/(+m[2]);
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+const UNICODE_FRAC = {0.125:'⅛',0.25:'¼',0.333:'⅓',0.375:'⅜',0.5:'½',0.625:'⅝',0.667:'⅔',0.75:'¾',0.875:'⅞'};
+function formatAmount(n){
+  if(n == null) return '';
+  if(Math.abs(n) < 1e-9) return '0';
+  const whole = Math.floor(n + 1e-9);
+  const frac = n - whole;
+  const candidates = [0,0.125,0.25,0.333,0.375,0.5,0.625,0.667,0.75,0.875,1];
+  let best = 0, bd = Infinity;
+  candidates.forEach(c => { const d = Math.abs(frac - c); if(d < bd){ bd = d; best = c; } });
+  let w = whole, f = best;
+  if(f === 1){ w += 1; f = 0; }
+  const fracStr = f === 0 ? '' : (UNICODE_FRAC[f] || '');
+  if(w === 0 && fracStr) return fracStr;
+  if(fracStr) return w + fracStr;
+  return String(w);
+}
+function displayAmount(ing, scale){
+  const p = parseAmount(ing.amount);
+  if(p == null) return (ing.amount||'').trim(); // non-numeric like "a pinch" — show as-is
+  return formatAmount(p * scale);
+}
+
+/* ---------- recipe box: render + edit + scale ---------- */
+function activeRecipe(){ return recipes.find(r => r.id === activeRecipeId) || null; }
+function renderRecipes(){ renderRecipeChips(); renderRecipeEditor(); renderRecipeCard(); }
+
+function renderRecipeChips(){
+  const wrap = document.getElementById('recipe-chips');
+  if(recipes.length === 0){ wrap.innerHTML = `<div class="empty-note" style="margin-top:0;">No recipes yet — "+ New recipe" to start your box.</div>`; return; }
+  wrap.innerHTML = recipes.map(r =>
+    `<div class="recipe-chip${r.id===activeRecipeId?' active':''}" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span><span class="x" title="Delete">✕</span></div>`
+  ).join('');
+  wrap.querySelectorAll('.recipe-chip').forEach(chip => {
+    const id = chip.getAttribute('data-id');
+    chip.querySelector('.nm').onclick = () => { activeRecipeId = id; renderRecipes(); scheduleSave(); };
+    chip.querySelector('.x').onclick = e => { e.stopPropagation(); deleteRecipe(id); };
+  });
+}
+
+function recIngRowHtml(ing){
+  return `<div class="rec-row" data-id="${ing.id}">
+    <input type="text" class="rec-amt" value="${escapeHtml(ing.amount)}" placeholder="¾" title="Amount (e.g. 3/4, 1 1/2, 2)" />
+    <select class="rec-unit">${RECIPE_UNITS.map(u=>`<option value="${u}" ${ing.unit===u?'selected':''}>${u||'—'}</option>`).join('')}</select>
+    <input type="text" class="rec-iname" value="${escapeHtml(ing.name)}" placeholder="ingredient" />
+    <input type="text" class="rec-note" value="${escapeHtml(ing.note)}" placeholder="note (optional)" />
+    <button class="rec-rm" title="Remove">✕</button>
+  </div>`;
+}
+function recEqRowHtml(eq){
+  return `<div class="rec-row" data-id="${eq.id}">
+    <input type="text" class="rec-eqname" value="${escapeHtml(eq.name)}" placeholder="equipment" />
+    <label class="rec-opt"><input type="checkbox" class="rec-eqopt" ${eq.optional?'checked':''} /> optional</label>
+    <button class="rec-rm" title="Remove">✕</button>
+  </div>`;
+}
+function recStepRowHtml(st, i){
+  return `<div class="rec-step" data-id="${st.id}">
+    <span class="num">${i+1}</span>
+    <textarea class="rec-steptext" placeholder="step…">${escapeHtml(st.text)}</textarea>
+    <button class="rec-rm" title="Remove">✕</button>
+  </div>`;
+}
+function renderRecipeEditor(){
+  const el = document.getElementById('recipe-editor-panel');
+  const r = activeRecipe();
+  if(!r){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="panel">
+    <p class="section-label">Edit recipe</p>
+    <input type="text" class="rec-name-input" id="rec-name" value="${escapeHtml(r.name)}" placeholder="Recipe name" />
+    <div class="rec-temp-row"><span style="font-size:12px;color:var(--text-dim);">Oven temp</span><input type="number" id="rec-temp" value="${escapeHtml(String(r.ovenTempF))}" placeholder="—" /><span style="font-size:12px;color:var(--text-dim);">°F</span></div>
+    <p class="section-label" style="margin-top:18px;">Ingredients</p>
+    <div id="rec-ing-rows">${r.ingredients.map(recIngRowHtml).join('')}</div>
+    <button class="rec-add" id="rec-add-ing">+ Add ingredient</button>
+    <p class="section-label" style="margin-top:18px;">Equipment</p>
+    <div id="rec-eq-rows">${r.equipment.map(recEqRowHtml).join('')}</div>
+    <button class="rec-add" id="rec-add-eq">+ Add equipment</button>
+    <p class="section-label" style="margin-top:18px;">Steps</p>
+    <div id="rec-step-rows">${r.steps.map((s,i)=>recStepRowHtml(s,i)).join('')}</div>
+    <button class="rec-add" id="rec-add-step">+ Add step</button>
+    <div class="rec-editor-foot"><button class="rec-delete" id="rec-del">Delete recipe</button></div>
+  </div>`;
+  wireRecipeEditor(r);
+}
+function wireRecipeEditor(r){
+  const el = document.getElementById('recipe-editor-panel');
+  const byId = id => el.querySelector('#'+id);
+  byId('rec-name').oninput = e => { r.name = e.target.value; renderRecipeChips(); renderRecipeCard(); scheduleSave(); };
+  byId('rec-temp').oninput = e => { r.ovenTempF = e.target.value; renderRecipeCard(); scheduleSave(); };
+  el.querySelectorAll('#rec-ing-rows .rec-row').forEach(row => {
+    const id = row.getAttribute('data-id');
+    const ing = r.ingredients.find(x=>x.id===id);
+    row.querySelector('.rec-amt').oninput = e => { ing.amount = e.target.value; renderRecipeCard(); scheduleSave(); };
+    row.querySelector('.rec-unit').onchange = e => { ing.unit = e.target.value; renderRecipeCard(); scheduleSave(); };
+    row.querySelector('.rec-iname').oninput = e => { ing.name = e.target.value; renderRecipeCard(); scheduleSave(); };
+    row.querySelector('.rec-note').oninput = e => { ing.note = e.target.value; renderRecipeCard(); scheduleSave(); };
+    row.querySelector('.rec-rm').onclick = () => { r.ingredients = r.ingredients.filter(x=>x.id!==id); renderRecipeEditor(); renderRecipeCard(); scheduleSave(); };
+  });
+  byId('rec-add-ing').onclick = () => { const it = mkRecipeIng(); r.ingredients.push(it); renderRecipeEditor(); renderRecipeCard(); focusRecRow(it.id,'.rec-amt'); scheduleSave(); };
+  el.querySelectorAll('#rec-eq-rows .rec-row').forEach(row => {
+    const id = row.getAttribute('data-id');
+    const eq = r.equipment.find(x=>x.id===id);
+    row.querySelector('.rec-eqname').oninput = e => { eq.name = e.target.value; renderRecipeCard(); scheduleSave(); };
+    row.querySelector('.rec-eqopt').onchange = e => { eq.optional = e.target.checked; renderRecipeCard(); scheduleSave(); };
+    row.querySelector('.rec-rm').onclick = () => { r.equipment = r.equipment.filter(x=>x.id!==id); renderRecipeEditor(); renderRecipeCard(); scheduleSave(); };
+  });
+  byId('rec-add-eq').onclick = () => { const it = mkEquip(); r.equipment.push(it); renderRecipeEditor(); renderRecipeCard(); focusRecRow(it.id,'.rec-eqname'); scheduleSave(); };
+  el.querySelectorAll('#rec-step-rows .rec-step').forEach(row => {
+    const id = row.getAttribute('data-id');
+    const st = r.steps.find(x=>x.id===id);
+    row.querySelector('.rec-steptext').oninput = e => { st.text = e.target.value; renderRecipeCard(); scheduleSave(); };
+    row.querySelector('.rec-rm').onclick = () => { r.steps = r.steps.filter(x=>x.id!==id); renderRecipeEditor(); renderRecipeCard(); scheduleSave(); };
+  });
+  byId('rec-add-step').onclick = () => { const it = mkStep(); r.steps.push(it); renderRecipeEditor(); renderRecipeCard(); focusRecRow(it.id,'.rec-steptext'); scheduleSave(); };
+  byId('rec-del').onclick = () => deleteRecipe(r.id);
+}
+function focusRecRow(id, sel){
+  const el = document.querySelector(`#recipe-editor-panel [data-id="${id}"] ${sel}`);
+  if(el){ el.focus(); el.scrollIntoView({block:'nearest'}); }
+}
+function renderRecipeCard(){
+  const area = document.getElementById('recipe-card-area');
+  const r = activeRecipe();
+  if(!r){ area.innerHTML = `<div class="ticket recipe-card"><div class="rc-empty">Select or create a recipe to see it here.</div></div>`; return; }
+  const scale = r.scale || 1;
+  let html = `<div class="recipe-scale-bar"><span class="lbl">Scale</span>` +
+    [1,2,3].map(s=>`<button class="scale-btn${scale===s?' active':''}" data-s="${s}">${s}×</button>`).join('') + `</div>`;
+  html += `<div class="ticket recipe-card">`;
+  html += `<div class="ticket-title">${escapeHtml(r.name||'Untitled Recipe')}</div>`;
+  const tempTxt = (r.ovenTempF !== '' && r.ovenTempF != null) ? `Oven <b>${escapeHtml(String(r.ovenTempF))}°F</b>` : '';
+  const scaleTxt = scale !== 1 ? `${tempTxt ? ' · ' : ''}scaled <b>${scale}×</b>` : '';
+  if(tempTxt || scaleTxt) html += `<div class="rc-temp">${tempTxt}${scaleTxt}</div>`;
+  html += `<div class="perf"></div>`;
+  const ings = r.ingredients.filter(i => (i.name||'').trim() || (i.amount||'').trim());
+  if(ings.length){
+    html += `<div class="rc-section">Ingredients</div>`;
+    ings.forEach(i => {
+      const amt = displayAmount(i, scale), unit = i.unit ? ' ' + i.unit : '';
+      html += `<div class="rc-ing"><span class="amt">${escapeHtml(amt + unit)}</span><span class="body"><span class="nm">${escapeHtml(i.name||'')}</span>${i.note?`<span class="nt">${escapeHtml(i.note)}</span>`:''}</span></div>`;
+    });
+  }
+  const eqs = r.equipment.filter(e => (e.name||'').trim());
+  if(eqs.length){
+    html += `<div class="rc-section">Equipment</div>`;
+    eqs.forEach(e => { html += `<div class="rc-equip">${escapeHtml(e.name)}${e.optional?` <span class="opt">(optional)</span>`:''}</div>`; });
+  }
+  const steps = r.steps.filter(s => (s.text||'').trim());
+  if(steps.length){
+    html += `<div class="rc-section">Method</div>`;
+    steps.forEach((s,i) => { html += `<div class="rc-step"><span class="n">${i+1}</span><span>${escapeHtml(s.text)}</span></div>`; });
+  }
+  if(!ings.length && !eqs.length && !steps.length) html += `<div class="rc-empty">Add ingredients, equipment, and steps in the editor →</div>`;
+  html += `</div>`;
+  area.innerHTML = html;
+  area.querySelectorAll('.scale-btn').forEach(b => b.onclick = () => { r.scale = +b.getAttribute('data-s'); renderRecipeCard(); scheduleSave(); });
+}
+function newRecipe(){
+  const r = mkRecipe('New Recipe');
+  r.ingredients.push(mkRecipeIng());
+  r.steps.push(mkStep());
+  recipes.push(r);
+  activeRecipeId = r.id;
+  renderRecipes();
+  const n = document.getElementById('rec-name'); if(n){ n.focus(); n.select(); }
+  scheduleSave();
+}
+function deleteRecipe(id){
+  const r = recipes.find(x=>x.id===id);
+  if(r && !confirm(`Delete recipe "${r.name||'Untitled'}"?`)) return;
+  recipes = recipes.filter(x=>x.id!==id);
+  if(activeRecipeId === id) activeRecipeId = recipes[0] ? recipes[0].id : null;
+  renderRecipes();
+  scheduleSave();
+}
+document.getElementById('new-recipe-btn').onclick = newRecipe;
+
 const DOUGH_TABS = ['pizza','bagel','donut'];
 DOUGH_TABS.forEach(t => document.getElementById('tab-'+t).onclick = () => switchTab(t));
 document.getElementById('tab-pantry').onclick = () => switchTab('pantry');
+document.getElementById('tab-recipes').onclick = () => switchTab('recipes');
 function refreshTabButtons(){
-  DOUGH_TABS.forEach(t => document.getElementById('tab-'+t).classList.toggle('active', !showPantryView && activeType===t));
-  document.getElementById('tab-pantry').classList.toggle('active', showPantryView);
+  DOUGH_TABS.forEach(t => document.getElementById('tab-'+t).classList.toggle('active', currentView==='dough' && activeType===t));
+  document.getElementById('tab-pantry').classList.toggle('active', currentView==='pantry');
+  document.getElementById('tab-recipes').classList.toggle('active', currentView==='recipes');
 }
 function switchTab(t){
-  showPantryView = (t === 'pantry');
-  if(!showPantryView) activeType = t;
+  if(t === 'pantry') currentView = 'pantry';
+  else if(t === 'recipes') currentView = 'recipes';
+  else { currentView = 'dough'; activeType = t; }
   refreshTabButtons();
   updateViewVisibility();
   renderAll();
   scheduleSave();
 }
 function updateViewVisibility(){
-  document.getElementById('pantry-view').classList.toggle('view-hidden', !showPantryView);
-  document.getElementById('recipe-view').classList.toggle('view-hidden', showPantryView);
-  document.getElementById('col-ticket').classList.toggle('view-hidden', showPantryView);
-  document.getElementById('ticket-toolbar').classList.toggle('view-hidden', showPantryView);
-  document.getElementById('main-grid').classList.toggle('pantry-active', showPantryView);
+  const dough = currentView === 'dough';
+  document.getElementById('recipe-view').classList.toggle('view-hidden', !dough);
+  document.getElementById('col-ticket').classList.toggle('view-hidden', !dough);
+  document.getElementById('ticket-toolbar').classList.toggle('view-hidden', !dough);
+  document.getElementById('pantry-view').classList.toggle('view-hidden', currentView !== 'pantry');
+  document.getElementById('recipes-view').classList.toggle('view-hidden', currentView !== 'recipes');
+  document.getElementById('main-grid').classList.toggle('solo-view', !dough);
 }
 
 document.getElementById('show-line-costs').onchange = e => {
@@ -1760,6 +2036,7 @@ function renderAll(){
   renderPresets();
   renderPantryFields();
   renderAssemblyFields();
+  renderRecipes();
 }
 
 /* ---------- boot ---------- */
