@@ -321,7 +321,7 @@
   body.bench .rc-ing{font-size:clamp(19px,3.2vw,42px);padding:clamp(4px,1vw,10px) 0;}
   body.bench .rc-ing .amt{min-width:clamp(90px,13vw,170px);}
   body.bench .rc-ing .body .nt{font-size:0.62em;}
-  body.bench .rc-equip{font-size:clamp(17px,2.9vw,38px);padding:clamp(3px,0.8vw,8px) 0;}
+  body.bench .rc-equip,body.bench .rc-yield{font-size:clamp(17px,2.9vw,38px);padding:clamp(3px,0.8vw,8px) 0;}
   body.bench .rc-step{font-size:clamp(16px,2.6vw,32px);padding:clamp(5px,1.2vw,12px) 0;line-height:1.45;}
   body.bench .bench-exit{
     display:flex;align-items:center;gap:8px;
@@ -471,6 +471,10 @@
   .rc-step{display:flex;gap:9px;font-size:13px;line-height:1.5;padding:5px 0;color:var(--paper-ink);}
   .rc-step .n{font-weight:700;color:var(--crust);min-width:16px;}
   .rc-equip .prep-key{color:var(--crust);font-weight:600;}
+  .rc-yield{font-size:14px;color:var(--paper-ink);padding:2px 0;}
+  .rec-yield-row{display:flex;align-items:center;gap:8px;margin-top:12px;}
+  .rec-yield-row input{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'Inter';font-size:13px;padding:7px 9px;border-radius:5px;}
+  .rec-yield-row input:focus{outline:none;border-color:var(--gold);}
   .rc-empty{font-size:12.5px;color:var(--paper-dim);}
 
   @media print{
@@ -507,11 +511,11 @@
     .method-title{ font-size:15.75px; }
 
     /* recipe card: black-on-white, sized up like the dough ticket */
-    .rc-temp, .rc-section, .rc-ing .amt, .rc-ing .body .nm, .rc-ing .body .nt, .rc-equip, .rc-equip .opt, .rc-equip .prep-key, .rc-step, .rc-step .n{ color:#000 !important; }
+    .rc-temp, .rc-section, .rc-yield, .rc-ing .amt, .rc-ing .body .nm, .rc-ing .body .nt, .rc-equip, .rc-equip .opt, .rc-equip .prep-key, .rc-step, .rc-step .n{ color:#000 !important; }
     .recipe-card .ticket-title{ font-size:30px; }
     .rc-section{ font-size:15.75px; margin:21px 0 6px; }
     .rc-ing{ font-size:19px; padding:4px 0; }
-    .rc-equip{ font-size:17px; padding:3px 0; }
+    .rc-equip, .rc-yield{ font-size:17px; padding:3px 0; }
     .rc-step{ font-size:16px; padding:5px 0; }
   }
 </style>
@@ -779,7 +783,7 @@ let fileName = '';
 
 /* ---------- recipe box (general scalable recipes, separate from the dough engine) ---------- */
 function rid(p){ return p + Math.random().toString(36).slice(2,9); }
-function mkRecipe(name){ return { id:rid('rec'), name:name||'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[] }; }
+function mkRecipe(name){ return { id:rid('rec'), name:name||'', yield:'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[] }; }
 function mkRecipeIng(){ return { id:rid('ri'), amount:'', unit:'', name:'', note:'' }; }
 function mkEquip(){ return { id:rid('eq'), name:'', optional:false }; }
 function mkStep(){ return { id:rid('st'), text:'' }; }
@@ -1840,6 +1844,15 @@ function displayAmount(ing, scale){
   if(p == null) return (ing.amount||'').trim(); // non-numeric like "a pinch" — show as-is
   return formatAmount(p * scale);
 }
+/* Scale a yield string by its leading number, keeping the rest ("24 cookies" ×2 → "48 cookies"). */
+function scaleYield(str, scale){
+  if(scale === 1 || !str) return str;
+  const m = str.match(/^\s*(\d+\s+\d+\/\d+|\d+\/\d+|\d*\.\d+|\d+)\s*(.*)$/);
+  if(!m) return str;
+  const n = parseAmount(m[1]);
+  if(n == null) return str;
+  return formatAmount(n * scale) + (m[2] ? ' ' + m[2] : '');
+}
 
 /* ---------- recipe box: render + edit + scale ---------- */
 function activeRecipe(){ return recipes.find(r => r.id === activeRecipeId) || null; }
@@ -1888,6 +1901,7 @@ function renderRecipeEditor(){
   el.innerHTML = `<div class="panel">
     <p class="section-label">Edit recipe</p>
     <input type="text" class="rec-name-input" id="rec-name" value="${escapeHtml(r.name)}" placeholder="Recipe name" />
+    <div class="rec-yield-row"><span style="font-size:12px;color:var(--text-dim);">Yield</span><input type="text" id="rec-yield" value="${escapeHtml(r.yield||'')}" placeholder="e.g. 24 cookies, 1 pot of chili" /></div>
     <p class="section-label" style="margin-top:18px;">Equipment and Prep</p>
     <div class="rec-temp-row"><span style="font-size:12px;color:var(--text-dim);">Oven temp</span><input type="number" id="rec-temp" value="${escapeHtml(String(r.ovenTempF))}" placeholder="—" /><span style="font-size:12px;color:var(--text-dim);">°F</span></div>
     <div id="rec-eq-rows">${r.equipment.map(recEqRowHtml).join('')}</div>
@@ -1906,6 +1920,7 @@ function wireRecipeEditor(r){
   const el = document.getElementById('recipe-editor-panel');
   const byId = id => el.querySelector('#'+id);
   byId('rec-name').oninput = e => { r.name = e.target.value; renderRecipeChips(); renderRecipeCard(); scheduleSave(); };
+  byId('rec-yield').oninput = e => { r.yield = e.target.value; renderRecipeCard(); scheduleSave(); };
   byId('rec-temp').oninput = e => { r.ovenTempF = e.target.value; renderRecipeCard(); scheduleSave(); };
   el.querySelectorAll('#rec-ing-rows .rec-row').forEach(row => {
     const id = row.getAttribute('data-id');
@@ -1949,6 +1964,9 @@ function renderRecipeCard(){
   let html = `<div class="ticket-title">${escapeHtml(r.name||'Untitled Recipe')}</div>`;
   if(scale !== 1) html += `<div class="rc-temp">scaled <b>${scale}×</b></div>`;
   html += `<div class="perf"></div>`;
+  // Yield (scaled by its leading number)
+  const yieldStr = (r.yield||'').trim();
+  if(yieldStr){ html += `<div class="rc-section">Yield</div><div class="rc-yield">${escapeHtml(scaleYield(yieldStr, scale))}</div>`; }
   // Equipment & Prep — oven temp first, then equipment
   const eqs = r.equipment.filter(e => (e.name||'').trim());
   const hasTemp = (r.ovenTempF !== '' && r.ovenTempF != null && String(r.ovenTempF).trim() !== '');
@@ -1972,7 +1990,7 @@ function renderRecipeCard(){
     html += `<div class="rc-section">Method</div>`;
     steps.forEach((s,i) => { html += `<div class="rc-step"><span class="n">${i+1}</span><span>${escapeHtml(s.text)}</span></div>`; });
   }
-  if(!hasTemp && !eqs.length && !ings.length && !steps.length) html += `<div class="rc-empty">Add prep, ingredients, and steps in the editor ←</div>`;
+  if(!yieldStr && !hasTemp && !eqs.length && !ings.length && !steps.length) html += `<div class="rc-empty">Add prep, ingredients, and steps in the editor ←</div>`;
   card.innerHTML = html;
   scaleBar.querySelectorAll('.scale-btn').forEach(b => b.onclick = () => { r.scale = +b.getAttribute('data-s'); renderRecipeCard(); scheduleSave(); });
 }
