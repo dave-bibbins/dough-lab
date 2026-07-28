@@ -315,6 +315,14 @@
   body.bench .total-row{font-size:clamp(24px,4vw,50px);padding-top:clamp(10px,1.6vw,20px);margin-top:clamp(4px,1vw,10px);}
   body.bench .method-title{font-size:clamp(13px,1.9vw,23px);margin-top:clamp(12px,2vw,22px);}
   body.bench .method{font-size:clamp(16px,2.6vw,32px);line-height:1.5;}
+  /* recipe card scaled up at the bench too */
+  body.bench .rc-temp{font-size:clamp(14px,2.3vw,26px);}
+  body.bench .rc-section{font-size:clamp(13px,1.9vw,23px);margin:clamp(14px,2.4vw,28px) 0 clamp(4px,1vw,10px);}
+  body.bench .rc-ing{font-size:clamp(19px,3.2vw,42px);padding:clamp(4px,1vw,10px) 0;}
+  body.bench .rc-ing .amt{min-width:clamp(90px,13vw,170px);}
+  body.bench .rc-ing .body .nt{font-size:0.62em;}
+  body.bench .rc-equip{font-size:clamp(17px,2.9vw,38px);padding:clamp(3px,0.8vw,8px) 0;}
+  body.bench .rc-step{font-size:clamp(16px,2.6vw,32px);padding:clamp(5px,1.2vw,12px) 0;line-height:1.45;}
   body.bench .bench-exit{
     display:flex;align-items:center;gap:8px;
     position:fixed;top:16px;right:16px;z-index:310;
@@ -462,6 +470,7 @@
   .rc-equip .opt{color:var(--paper-dim);font-style:italic;font-size:11.5px;}
   .rc-step{display:flex;gap:9px;font-size:13px;line-height:1.5;padding:5px 0;color:var(--paper-ink);}
   .rc-step .n{font-weight:700;color:var(--crust);min-width:16px;}
+  .rc-equip .prep-key{color:var(--crust);font-weight:600;}
   .rc-empty{font-size:12.5px;color:var(--paper-dim);}
 
   @media print{
@@ -496,6 +505,14 @@
     .cost-row{ font-size:18px; margin-top:9px; }
     .method{ font-size:17.25px; }
     .method-title{ font-size:15.75px; }
+
+    /* recipe card: black-on-white, sized up like the dough ticket */
+    .rc-temp, .rc-section, .rc-ing .amt, .rc-ing .body .nm, .rc-ing .body .nt, .rc-equip, .rc-equip .opt, .rc-equip .prep-key, .rc-step, .rc-step .n{ color:#000 !important; }
+    .recipe-card .ticket-title{ font-size:30px; }
+    .rc-section{ font-size:15.75px; margin:21px 0 6px; }
+    .rc-ing{ font-size:19px; padding:4px 0; }
+    .rc-equip{ font-size:17px; padding:3px 0; }
+    .rc-step{ font-size:16px; padding:5px 0; }
   }
 </style>
 </head>
@@ -549,19 +566,12 @@
       </div>
 
       <div id="recipes-view" class="view-hidden">
-        <div class="recipes-layout">
-          <div class="recipe-editor-col">
-            <div class="panel">
-              <p class="section-label">Recipe box</p>
-              <div class="recipe-chips" id="recipe-chips"></div>
-              <button class="add-extra" id="new-recipe-btn" style="margin-top:12px;">+ New recipe</button>
-            </div>
-            <div id="recipe-editor-panel"></div>
-          </div>
-          <div class="recipe-card-col">
-            <div id="recipe-card-area"></div>
-          </div>
+        <div class="panel">
+          <p class="section-label">Recipe box</p>
+          <div class="recipe-chips" id="recipe-chips"></div>
+          <button class="add-extra" id="new-recipe-btn" style="margin-top:12px;">+ New recipe</button>
         </div>
+        <div id="recipe-editor-panel"></div>
       </div>
 
       <div id="recipe-view">
@@ -653,7 +663,7 @@
     </div>
 
     <div class="col-ticket" id="col-ticket">
-      <div class="ticket-wrap">
+      <div class="ticket-wrap" id="dough-ticket-wrap">
         <div class="ticket-toolbar" id="ticket-toolbar">
           <div class="line-cost-toggle">
             <span>Show item costs</span>
@@ -674,8 +684,24 @@
           </div>
         </div>
         <div class="ticket" id="ticket"></div>
-        <button class="bench-exit" id="bench-exit" title="Exit bench view (Esc)">✕ Done</button>
       </div>
+      <div class="ticket-wrap view-hidden" id="recipe-card-wrap">
+        <div class="ticket-toolbar" id="recipe-toolbar">
+          <div class="recipe-scale-bar" id="recipe-scale-bar"></div>
+          <div class="toolbar-btns">
+            <button class="print-btn" id="rec-bench-btn" title="Fullscreen recipe card for the bench">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+              Bench
+            </button>
+            <button class="print-btn" id="rec-print-btn" title="Print recipe card">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Print
+            </button>
+          </div>
+        </div>
+        <div class="ticket recipe-card" id="recipe-card"></div>
+      </div>
+      <button class="bench-exit" id="bench-exit" title="Exit bench view (Esc)">✕ Done</button>
     </div>
   </div>
 
@@ -1746,6 +1772,8 @@ function exitBench(){
   releaseWakeLock();
 }
 document.getElementById('bench-btn').onclick = enterBench;
+document.getElementById('rec-bench-btn').onclick = enterBench;   // recipe card is the active .ticket in the ticket column
+document.getElementById('rec-print-btn').onclick = () => { window.print(); };
 document.getElementById('bench-exit').onclick = exitBench;
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && document.body.classList.contains('bench')) exitBench(); });
 // Wake lock is auto-dropped when the tab is backgrounded; re-acquire on return if still at the bench.
@@ -1852,13 +1880,13 @@ function renderRecipeEditor(){
   el.innerHTML = `<div class="panel">
     <p class="section-label">Edit recipe</p>
     <input type="text" class="rec-name-input" id="rec-name" value="${escapeHtml(r.name)}" placeholder="Recipe name" />
+    <p class="section-label" style="margin-top:18px;">Equipment and Prep</p>
     <div class="rec-temp-row"><span style="font-size:12px;color:var(--text-dim);">Oven temp</span><input type="number" id="rec-temp" value="${escapeHtml(String(r.ovenTempF))}" placeholder="—" /><span style="font-size:12px;color:var(--text-dim);">°F</span></div>
+    <div id="rec-eq-rows">${r.equipment.map(recEqRowHtml).join('')}</div>
+    <button class="rec-add" id="rec-add-eq">+ Add equipment</button>
     <p class="section-label" style="margin-top:18px;">Ingredients</p>
     <div id="rec-ing-rows">${r.ingredients.map(recIngRowHtml).join('')}</div>
     <button class="rec-add" id="rec-add-ing">+ Add ingredient</button>
-    <p class="section-label" style="margin-top:18px;">Equipment</p>
-    <div id="rec-eq-rows">${r.equipment.map(recEqRowHtml).join('')}</div>
-    <button class="rec-add" id="rec-add-eq">+ Add equipment</button>
     <p class="section-label" style="margin-top:18px;">Steps</p>
     <div id="rec-step-rows">${r.steps.map((s,i)=>recStepRowHtml(s,i)).join('')}</div>
     <button class="rec-add" id="rec-add-step">+ Add step</button>
@@ -1903,18 +1931,25 @@ function focusRecRow(id, sel){
   if(el){ el.focus(); el.scrollIntoView({block:'nearest'}); }
 }
 function renderRecipeCard(){
-  const area = document.getElementById('recipe-card-area');
+  const scaleBar = document.getElementById('recipe-scale-bar');
+  const card = document.getElementById('recipe-card');
   const r = activeRecipe();
-  if(!r){ area.innerHTML = `<div class="ticket recipe-card"><div class="rc-empty">Select or create a recipe to see it here.</div></div>`; return; }
+  if(!r){ scaleBar.innerHTML = ''; card.innerHTML = `<div class="rc-empty">Select or create a recipe to see it here.</div>`; return; }
   const scale = r.scale || 1;
-  let html = `<div class="recipe-scale-bar"><span class="lbl">Scale</span>` +
-    [1,2,3].map(s=>`<button class="scale-btn${scale===s?' active':''}" data-s="${s}">${s}×</button>`).join('') + `</div>`;
-  html += `<div class="ticket recipe-card">`;
-  html += `<div class="ticket-title">${escapeHtml(r.name||'Untitled Recipe')}</div>`;
-  const tempTxt = (r.ovenTempF !== '' && r.ovenTempF != null) ? `Oven <b>${escapeHtml(String(r.ovenTempF))}°F</b>` : '';
-  const scaleTxt = scale !== 1 ? `${tempTxt ? ' · ' : ''}scaled <b>${scale}×</b>` : '';
-  if(tempTxt || scaleTxt) html += `<div class="rc-temp">${tempTxt}${scaleTxt}</div>`;
+  scaleBar.innerHTML = `<span class="lbl">Scale</span>` +
+    [1,2,3].map(s=>`<button class="scale-btn${scale===s?' active':''}" data-s="${s}">${s}×</button>`).join('');
+  let html = `<div class="ticket-title">${escapeHtml(r.name||'Untitled Recipe')}</div>`;
+  if(scale !== 1) html += `<div class="rc-temp">scaled <b>${scale}×</b></div>`;
   html += `<div class="perf"></div>`;
+  // Equipment & Prep — oven temp first, then equipment
+  const eqs = r.equipment.filter(e => (e.name||'').trim());
+  const hasTemp = (r.ovenTempF !== '' && r.ovenTempF != null && String(r.ovenTempF).trim() !== '');
+  if(hasTemp || eqs.length){
+    html += `<div class="rc-section">Equipment &amp; Prep</div>`;
+    if(hasTemp) html += `<div class="rc-equip"><span class="prep-key">Oven</span> ${escapeHtml(String(r.ovenTempF))}°F</div>`;
+    eqs.forEach(e => { html += `<div class="rc-equip">${escapeHtml(e.name)}${e.optional?` <span class="opt">(optional)</span>`:''}</div>`; });
+  }
+  // Ingredients
   const ings = r.ingredients.filter(i => (i.name||'').trim() || (i.amount||'').trim());
   if(ings.length){
     html += `<div class="rc-section">Ingredients</div>`;
@@ -1923,20 +1958,15 @@ function renderRecipeCard(){
       html += `<div class="rc-ing"><span class="amt">${escapeHtml(amt + unit)}</span><span class="body"><span class="nm">${escapeHtml(i.name||'')}</span>${i.note?`<span class="nt">${escapeHtml(i.note)}</span>`:''}</span></div>`;
     });
   }
-  const eqs = r.equipment.filter(e => (e.name||'').trim());
-  if(eqs.length){
-    html += `<div class="rc-section">Equipment</div>`;
-    eqs.forEach(e => { html += `<div class="rc-equip">${escapeHtml(e.name)}${e.optional?` <span class="opt">(optional)</span>`:''}</div>`; });
-  }
+  // Method
   const steps = r.steps.filter(s => (s.text||'').trim());
   if(steps.length){
     html += `<div class="rc-section">Method</div>`;
     steps.forEach((s,i) => { html += `<div class="rc-step"><span class="n">${i+1}</span><span>${escapeHtml(s.text)}</span></div>`; });
   }
-  if(!ings.length && !eqs.length && !steps.length) html += `<div class="rc-empty">Add ingredients, equipment, and steps in the editor →</div>`;
-  html += `</div>`;
-  area.innerHTML = html;
-  area.querySelectorAll('.scale-btn').forEach(b => b.onclick = () => { r.scale = +b.getAttribute('data-s'); renderRecipeCard(); scheduleSave(); });
+  if(!hasTemp && !eqs.length && !ings.length && !steps.length) html += `<div class="rc-empty">Add prep, ingredients, and steps in the editor ←</div>`;
+  card.innerHTML = html;
+  scaleBar.querySelectorAll('.scale-btn').forEach(b => b.onclick = () => { r.scale = +b.getAttribute('data-s'); renderRecipeCard(); scheduleSave(); });
 }
 function newRecipe(){
   const r = mkRecipe('New Recipe');
@@ -1978,12 +2008,17 @@ function switchTab(t){
 }
 function updateViewVisibility(){
   const dough = currentView === 'dough';
+  const recipes = currentView === 'recipes';
+  const pantry = currentView === 'pantry';
+  // col-inputs children
   document.getElementById('recipe-view').classList.toggle('view-hidden', !dough);
-  document.getElementById('col-ticket').classList.toggle('view-hidden', !dough);
-  document.getElementById('ticket-toolbar').classList.toggle('view-hidden', !dough);
-  document.getElementById('pantry-view').classList.toggle('view-hidden', currentView !== 'pantry');
-  document.getElementById('recipes-view').classList.toggle('view-hidden', currentView !== 'recipes');
-  document.getElementById('main-grid').classList.toggle('solo-view', !dough);
+  document.getElementById('pantry-view').classList.toggle('view-hidden', !pantry);
+  document.getElementById('recipes-view').classList.toggle('view-hidden', !recipes);
+  // ticket column holds the dough ticket OR the recipe card; shown for both, hidden only for pantry
+  document.getElementById('col-ticket').classList.toggle('view-hidden', pantry);
+  document.getElementById('dough-ticket-wrap').classList.toggle('view-hidden', !dough);
+  document.getElementById('recipe-card-wrap').classList.toggle('view-hidden', !recipes);
+  document.getElementById('main-grid').classList.toggle('solo-view', pantry);
 }
 
 document.getElementById('show-line-costs').onchange = e => {
