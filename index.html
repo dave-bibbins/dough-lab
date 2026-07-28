@@ -908,9 +908,17 @@ function applyData(data){
   refreshTabButtons();
 }
 
-/* One place that describes the full saved payload — used by file writes, localStorage, and Export. */
+/* One place that describes the full saved payload — used by file writes, localStorage, and Export.
+   `formatVersion` (data-schema version) + `savedAt` (recency) are stamped in so a file's currency is
+   knowable even if it gets renamed; applyData ignores them if absent. */
+const FORMAT_VERSION = 1;
 function currentData(){
-  return { pantry, presets, recipes, currentState: {pizza:state.pizza, bagel:state.bagel, donut:state.donut, activeType, scrapOn, scrapPct, showLineCosts, activeRecipeId} };
+  return { formatVersion: FORMAT_VERSION, savedAt: new Date().toISOString(), pantry, presets, recipes, currentState: {pizza:state.pizza, bagel:state.bagel, donut:state.donut, activeType, scrapOn, scrapPct, showLineCosts, activeRecipeId} };
+}
+/* Timestamped export name so synced copies self-sort by recency, e.g. dough-lab-data_2026-07-28_1430.json */
+function exportFilename(){
+  const d = new Date(), p = n => String(n).padStart(2,'0');
+  return `dough-lab-data_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.json`;
 }
 
 /* Persistence routes on capability: desktop Chrome/Edge write the user's data file (File System
@@ -962,7 +970,7 @@ function exportData(){
   const blob = new Blob([JSON.stringify(currentData(), null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'dough-lab-data.json';
+  a.href = url; a.download = exportFilename();
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
   setSaveBadge('Exported', 'ok'); hideSaveBadgeSoon();
