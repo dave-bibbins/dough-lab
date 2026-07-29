@@ -2283,7 +2283,7 @@ function renderLibrary(){
     ? `<div class="lib-empty"><div class="em-h">No formulas match.</div></div>`
     : `<div class="lib-empty"><div class="em-h">No formulas yet.</div><div class="em-sub">Start one from a template.</div><span class="em-act" data-act="new-formula">+ New formula</span></div>`;
   fWrap.innerHTML = forms.map(s =>
-    `<div class="lib-card" data-id="${s.id}"><span class="nm">${escapeHtml(formulaTitle(s))}</span><span class="sub">${escapeHtml(formulaSub(s))}</span>${cardTagsHtml(s)}<span class="del" title="Delete">✕</span></div>`
+    `<div class="lib-card" data-id="${s.id}"><span class="nm">${escapeHtml(formulaTitle(s))}</span>${cardTagsHtml(s)}<span class="del" title="Delete">✕</span></div>`
   ).join('') || emptyF;
 
   const emptyR = filtering
