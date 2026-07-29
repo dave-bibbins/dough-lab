@@ -2055,6 +2055,7 @@ function wireRecipeEditor(r){
     row.querySelector('.rec-amt').oninput = e => { ing.amount = e.target.value; renderRecipeCard(); scheduleSave(); };
     row.querySelector('.rec-unit').onchange = e => { ing.unit = e.target.value; renderRecipeCard(); scheduleSave(); };
     row.querySelector('.rec-iname').oninput = e => { ing.name = e.target.value; renderRecipeCard(); scheduleSave(); };
+    attachPantryAutocomplete(row.querySelector('.rec-iname'), val => { ing.name = val; renderRecipeCard(); scheduleSave(); });
     row.querySelector('.rec-note').oninput = e => { ing.note = e.target.value; renderRecipeCard(); scheduleSave(); };
     row.querySelector('.rec-rm').onclick = () => { r.ingredients = r.ingredients.filter(x=>x.id!==id); renderRecipeEditor(); renderRecipeCard(); scheduleSave(); };
   });
