@@ -564,8 +564,11 @@
   .recipe-chip.active{border-color:var(--gold);color:var(--gold-bright);background:rgba(200,155,60,0.12);}
   .recipe-chip .x{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:12px;line-height:1;}
   .recipe-chip .x:hover{background:var(--crust);color:#fff;}
-  .rec-name-input{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'Fraunces',serif;font-weight:600;font-size:18px;padding:9px 11px;border-radius:5px;}
-  .rec-name-input:focus{outline:none;border-color:var(--gold);}
+  /* Name reads as a title at rest; only shows input chrome on hover/focus (click to edit) */
+  .rec-name-input{width:100%;background:transparent;border:1px solid transparent;color:var(--text);font-family:'Fraunces',serif;font-weight:600;font-size:23px;padding:6px 10px;border-radius:6px;transition:background .12s, border-color .12s;cursor:text;}
+  .rec-name-input::placeholder{color:var(--text-dim);}
+  .rec-name-input:hover{background:var(--panel-2);border-color:var(--line);}
+  .rec-name-input:focus{background:var(--panel-2);border-color:var(--gold);outline:none;}
   .rec-temp-row{display:flex;align-items:center;gap:8px;margin-top:12px;}
   .rec-temp-row input{width:80px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;padding:7px 8px;border-radius:5px;}
   .rec-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
@@ -745,7 +748,7 @@
       <div id="recipe-view">
 
       <div class="panel">
-        <input type="text" id="formula-name" class="rec-name-input" placeholder="Formula name (e.g. NY Style)" />
+        <input type="text" id="formula-name" class="rec-name-input" placeholder="Untitled" />
         <div class="tag-edit" id="formula-tags"></div>
       </div>
 
@@ -2023,7 +2026,7 @@ function renderRecipeEditor(){
   if(!r){ el.innerHTML = ''; return; }
   el.innerHTML = `<div class="panel">
     <p class="section-label">Edit recipe</p>
-    <input type="text" class="rec-name-input" id="rec-name" value="${escapeHtml(r.name)}" placeholder="Recipe name" />
+    <input type="text" class="rec-name-input" id="rec-name" value="${escapeHtml(r.name)}" placeholder="Untitled" />
     <div class="tag-edit" id="recipe-tags"></div>
     <div class="rec-yield-row"><span style="font-size:12px;color:var(--text-dim);">Yield</span><input type="text" id="rec-yield" value="${escapeHtml(r.yield||'')}" placeholder="e.g. 24 cookies, 1 pot of chili" /></div>
     <p class="section-label" style="margin-top:18px;">Equipment and Prep</p>
