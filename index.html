@@ -183,6 +183,48 @@
   }
   .lib-empty .em-act:hover{border-color:var(--gold);color:var(--gold);}
 
+  /* ---------- tags: filter pills (library) + card chips ---------- */
+  .tag-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .tag-pill{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.03em;
+    color:var(--text-dim);background:var(--panel-2);border:1px solid var(--line);
+    border-radius:999px;padding:5px 12px;cursor:pointer;
+    transition:border-color .15s, color .15s, background .15s;
+  }
+  .tag-pill:hover{border-color:var(--gold);color:var(--text);}
+  .tag-pill.active{background:var(--gold);border-color:var(--gold);color:#241f16;font-weight:600;}
+  .lib-card .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .card-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.02em;
+    color:var(--text-dim);background:var(--panel-2);border-radius:4px;padding:2px 7px;
+  }
+
+  /* ---------- tags: editor (detail views) ---------- */
+  .tag-edit{margin-top:10px;}
+  .tag-edit .te-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .te-chip{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:3px 5px 3px 10px;
+  }
+  .te-chip .x{
+    width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--text-dim);font-size:11px;line-height:1;cursor:pointer;
+  }
+  .te-chip .x:hover{background:var(--crust);color:#fff;}
+  .te-input{
+    flex:1;min-width:120px;background:transparent;border:none;color:var(--text);
+    font-family:'IBM Plex Mono',monospace;font-size:12px;padding:4px 2px;
+  }
+  .te-input:focus{outline:none;}
+  .te-input::placeholder{color:var(--text-dim);}
+  .te-sug{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .te-sug .s{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-dim);
+    border:1px dashed var(--line);border-radius:999px;padding:3px 9px;cursor:pointer;
+  }
+  .te-sug .s:hover{border-color:var(--gold);color:var(--text);border-style:solid;}
+
   .panel{
     background:var(--panel);
     border:1px solid var(--line);
@@ -659,6 +701,7 @@
         <input type="text" id="lib-q" placeholder="Search formulas and recipes" autocomplete="off" spellcheck="false" />
         <button class="clear" id="lib-q-clear" title="Clear (Esc)" aria-label="Clear search">✕</button>
       </div>
+      <div class="tag-pills view-hidden" id="lib-tags"></div>
     </div>
     <div class="lib-section" id="lib-formulas">
       <p class="section-label">Formulas <span class="lib-count" id="count-formulas"></span></p>
@@ -703,6 +746,7 @@
 
       <div class="panel">
         <input type="text" id="formula-name" class="rec-name-input" placeholder="Formula name (e.g. NY Style)" />
+        <div class="tag-edit" id="formula-tags"></div>
       </div>
 
       <div class="panel">
@@ -890,7 +934,7 @@ function rid(p){ return p + Math.random().toString(36).slice(2,9); }
    POINTERS into the three seed formula items, so the existing dough engine (which reads
    state[activeType]) keeps working unchanged. Recipe items live in the same library. */
 const DEFAULT_FORMULA = { pizza: defaultPizza, bagel: defaultBagel, donut: defaultDonut };
-function mkFormula(type){ return Object.assign(DEFAULT_FORMULA[type](), { id:rid('f'), kind:'formula' }); }
+function mkFormula(type){ return Object.assign(DEFAULT_FORMULA[type](), { id:rid('f'), kind:'formula', tags:[] }); }
 function seedLibrary(data){
   const lib = ['pizza','bagel','donut'].map(mkFormula);
   // fold any existing recipes (shape-compatible) into the library, tagged as recipe items
@@ -920,7 +964,7 @@ let fileHandle = null;
 let fileName = '';
 
 /* ---------- recipe box (general scalable recipes; items live in `library` with kind:'recipe') ---------- */
-function mkRecipe(name){ return { id:rid('rec'), name:name||'', yield:'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[], kind:'recipe' }; }
+function mkRecipe(name){ return { id:rid('rec'), name:name||'', yield:'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[], kind:'recipe', tags:[] }; }
 function mkRecipeIng(){ return { id:rid('ri'), amount:'', unit:'', name:'', note:'' }; }
 function mkEquip(){ return { id:rid('eq'), name:'', optional:false }; }
 function mkStep(){ return { id:rid('st'), text:'' }; }
@@ -1980,6 +2024,7 @@ function renderRecipeEditor(){
   el.innerHTML = `<div class="panel">
     <p class="section-label">Edit recipe</p>
     <input type="text" class="rec-name-input" id="rec-name" value="${escapeHtml(r.name)}" placeholder="Recipe name" />
+    <div class="tag-edit" id="recipe-tags"></div>
     <div class="rec-yield-row"><span style="font-size:12px;color:var(--text-dim);">Yield</span><input type="text" id="rec-yield" value="${escapeHtml(r.yield||'')}" placeholder="e.g. 24 cookies, 1 pot of chili" /></div>
     <p class="section-label" style="margin-top:18px;">Equipment and Prep</p>
     <div class="rec-temp-row"><span style="font-size:12px;color:var(--text-dim);">Oven temp</span><input type="number" id="rec-temp" value="${escapeHtml(String(r.ovenTempF))}" placeholder="—" /><span style="font-size:12px;color:var(--text-dim);">°F</span></div>
@@ -2027,6 +2072,7 @@ function wireRecipeEditor(r){
   });
   byId('rec-add-step').onclick = () => { const it = mkStep(); r.steps.push(it); renderRecipeEditor(); renderRecipeCard(); focusRecRow(it.id,'.rec-steptext'); scheduleSave(); };
   byId('rec-del').onclick = () => deleteRecipe(r.id);
+  renderTagEditor('recipe-tags', r, () => scheduleSave());
 }
 function focusRecRow(id, sel){
   const el = document.querySelector(`#recipe-editor-panel [data-id="${id}"] ${sel}`);
@@ -2132,48 +2178,117 @@ function recipeSub(r){
   if(String(r.ovenTempF||'').trim()) bits.push('oven ' + r.ovenTempF + '°F');
   return bits.join(' · ') || 'recipe';
 }
+// ---------- tags ----------
+function itemTags(it){ return Array.isArray(it && it.tags) ? it.tags : []; }
+function allTags(){
+  const seen = new Map(); // lowercase key -> first-seen display form
+  library.forEach(it => itemTags(it).forEach(t => { const k = t.toLowerCase(); if(!seen.has(k)) seen.set(k, t); }));
+  return [...seen.values()].sort((a,b) => a.localeCompare(b));
+}
+function addItemTag(it, raw){
+  const t = (raw||'').trim().replace(/\s+/g,' ');
+  if(!t) return false;
+  if(!Array.isArray(it.tags)) it.tags = [];
+  if(it.tags.some(x => x.toLowerCase() === t.toLowerCase())) return false; // dedupe, case-insensitive
+  it.tags.push(t); return true;
+}
+function removeItemTag(it, tag){
+  if(Array.isArray(it.tags)) it.tags = it.tags.filter(x => x.toLowerCase() !== tag.toLowerCase());
+}
+function renderTagEditor(containerId, item, onChange){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const tags = itemTags(item);
+  const sugs = allTags().filter(t => !tags.some(x => x.toLowerCase() === t.toLowerCase()));
+  el.innerHTML =
+    `<div class="te-chips">` +
+      tags.map(t => `<span class="te-chip" data-tag="${escapeHtml(t)}">${escapeHtml(t)}<span class="x" title="Remove">✕</span></span>`).join('') +
+      `<input type="text" class="te-input" placeholder="${tags.length ? 'Add tag…' : 'Add a tag (e.g. Pizza, Cookies)'}" autocomplete="off" spellcheck="false" /></div>` +
+    (sugs.length ? `<div class="te-sug">` + sugs.map(t => `<span class="s" data-tag="${escapeHtml(t)}">+ ${escapeHtml(t)}</span>`).join('') + `</div>` : '');
+  const input = el.querySelector('.te-input');
+  const commit = refocus => { onChange(); renderTagEditor(containerId, item, onChange); if(refocus){ const i = document.getElementById(containerId).querySelector('.te-input'); if(i) i.focus(); } };
+  el.querySelectorAll('.te-chip .x').forEach(x => x.onclick = () => { removeItemTag(item, x.parentElement.getAttribute('data-tag')); commit(true); });
+  el.querySelectorAll('.te-sug .s').forEach(s => s.onclick = () => { addItemTag(item, s.getAttribute('data-tag')); commit(true); });
+  input.onkeydown = e => {
+    if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); const added = addItemTag(item, input.value); input.value = ''; if(added) commit(true); }
+    else if(e.key === 'Backspace' && !input.value){ const cur = itemTags(item); if(cur.length){ removeItemTag(item, cur[cur.length-1]); commit(true); } }
+  };
+  input.onblur = () => { if(input.value.trim() && addItemTag(item, input.value)){ input.value = ''; commit(false); } };
+}
+
+let libTagFilter = '';
+function renderTagFilter(){
+  const el = document.getElementById('lib-tags');
+  const tags = allTags();
+  if(libTagFilter && !tags.some(t => t.toLowerCase() === libTagFilter.toLowerCase())) libTagFilter = ''; // stale filter
+  el.classList.toggle('view-hidden', tags.length === 0);
+  el.innerHTML = tags.map(t =>
+    `<span class="tag-pill${libTagFilter && libTagFilter.toLowerCase() === t.toLowerCase() ? ' active' : ''}" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</span>`
+  ).join('');
+  el.querySelectorAll('.tag-pill').forEach(p => p.onclick = () => {
+    const t = p.getAttribute('data-tag');
+    libTagFilter = (libTagFilter && libTagFilter.toLowerCase() === t.toLowerCase()) ? '' : t; // toggle
+    renderLibrary();
+  });
+}
+function tagMatch(it){ return !libTagFilter || itemTags(it).some(x => x.toLowerCase() === libTagFilter.toLowerCase()); }
+function cardTagsHtml(it){
+  const tags = itemTags(it);
+  return tags.length ? `<div class="tags">${tags.map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('')}</div>` : '';
+}
+function clearLibFilters(){
+  libTagFilter = '';
+  const i = document.getElementById('lib-q'); i.value = '';
+  i.dispatchEvent(new Event('input',{bubbles:true})); // apply() -> libQuery='' + renderLibrary()
+}
+
 function libMatch(item){
   const q = libQuery.trim().toLowerCase();
   if(!q) return true;
-  const hay = item.kind === 'formula'
+  const base = item.kind === 'formula'
     ? formulaTitle(item) + ' ' + formulaSub(item)
     : (item.name || '') + ' ' + recipeSub(item);
-  return hay.toLowerCase().includes(q);
+  return (base + ' ' + itemTags(item).join(' ')).toLowerCase().includes(q);
 }
 
 function renderLibrary(){
+  renderTagFilter();
   const fWrap = document.querySelector('#lib-formulas .lib-cards');
   const rWrap = document.querySelector('#lib-recipes .lib-cards');
   const q = libQuery.trim();
-  const forms = formulaItems().filter(libMatch);
-  const recs  = recipeItems().filter(libMatch);
+  const filtering = !!q || !!libTagFilter;
+  const forms = formulaItems().filter(libMatch).filter(tagMatch);
+  const recs  = recipeItems().filter(libMatch).filter(tagMatch);
   document.getElementById('count-formulas').textContent = forms.length ? '· ' + forms.length : '';
   document.getElementById('count-recipes').textContent  = recs.length  ? '· ' + recs.length  : '';
 
-  // total miss on a search: one unified message, both sections hidden
-  const totalMiss = !!q && !forms.length && !recs.length;
+  // total miss while filtering: one unified message, both sections hidden
+  const totalMiss = filtering && !forms.length && !recs.length;
   document.getElementById('lib-formulas').classList.toggle('view-hidden', totalMiss);
   document.getElementById('lib-recipes').classList.toggle('view-hidden', totalMiss);
   const nr = document.getElementById('lib-noresult');
   nr.classList.toggle('view-hidden', !totalMiss);
   if(totalMiss){
-    nr.innerHTML = `<div class="em-h">Nothing matches “${escapeHtml(q)}”.</div><div class="em-sub">Try a different name, or clear the search.</div><span class="em-act" data-act="clear-q">Clear search</span>`;
-    const c = nr.querySelector('[data-act="clear-q"]');
-    if(c) c.onclick = () => { const i = document.getElementById('lib-q'); i.value = ''; i.dispatchEvent(new Event('input',{bubbles:true})); i.focus(); };
+    const what = q ? `“${escapeHtml(q)}”` : `#${escapeHtml(libTagFilter)}`;
+    nr.innerHTML = `<div class="em-h">Nothing matches ${what}.</div><div class="em-sub">Try a different filter, or clear it.</div><span class="em-act" data-act="clear-filters">Clear filters</span>`;
+    const c = nr.querySelector('[data-act="clear-filters"]');
+    if(c) c.onclick = clearLibFilters;
     return;
   }
 
+  const emptyF = filtering
+    ? `<div class="lib-empty"><div class="em-h">No formulas match.</div></div>`
+    : `<div class="lib-empty"><div class="em-h">No formulas yet.</div><div class="em-sub">Start one from a template.</div><span class="em-act" data-act="new-formula">+ New formula</span></div>`;
   fWrap.innerHTML = forms.map(s =>
-    `<div class="lib-card" data-id="${s.id}"><span class="nm">${escapeHtml(formulaTitle(s))}</span><span class="sub">${escapeHtml(formulaSub(s))}</span><span class="del" title="Delete">✕</span></div>`
-  ).join('') || (q
-    ? `<div class="lib-empty"><div class="em-h">Nothing matches “${escapeHtml(q)}”.</div><div class="em-sub">No formulas by that name.</div></div>`
-    : `<div class="lib-empty"><div class="em-h">No formulas yet.</div><div class="em-sub">Start one from a template.</div><span class="em-act" data-act="new-formula">+ New formula</span></div>`);
+    `<div class="lib-card" data-id="${s.id}"><span class="nm">${escapeHtml(formulaTitle(s))}</span><span class="sub">${escapeHtml(formulaSub(s))}</span>${cardTagsHtml(s)}<span class="del" title="Delete">✕</span></div>`
+  ).join('') || emptyF;
 
+  const emptyR = filtering
+    ? `<div class="lib-empty"><div class="em-h">No recipes match.</div></div>`
+    : `<div class="lib-empty"><div class="em-h">No recipes yet.</div><div class="em-sub">Cookies, sauces, brines — anything that isn’t dough.</div><span class="em-act" data-act="new-recipe">+ New recipe</span></div>`;
   rWrap.innerHTML = recs.map(r =>
-    `<div class="lib-card" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span><span class="sub">${escapeHtml(recipeSub(r))}</span><span class="del" title="Delete">✕</span></div>`
-  ).join('') || (q
-    ? `<div class="lib-empty"><div class="em-h">Nothing matches “${escapeHtml(q)}”.</div><div class="em-sub">No recipes by that name.</div></div>`
-    : `<div class="lib-empty"><div class="em-h">No recipes yet.</div><div class="em-sub">Cookies, sauces, brines — anything that isn’t dough.</div><span class="em-act" data-act="new-recipe">+ New recipe</span></div>`);
+    `<div class="lib-card" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span><span class="sub">${escapeHtml(recipeSub(r))}</span>${cardTagsHtml(r)}<span class="del" title="Delete">✕</span></div>`
+  ).join('') || emptyR;
 
   fWrap.querySelectorAll('.lib-card').forEach(card => {
     const id = card.getAttribute('data-id');
@@ -2296,6 +2411,7 @@ document.getElementById('formula-name').oninput = e => { state[activeType].name 
 function renderAll(){
   const s = state[activeType];
   document.getElementById('formula-name').value = s.name || s.recipeName || '';
+  renderTagEditor('formula-tags', s, () => scheduleSave());
   document.getElementById('scrap-enabled').checked = scrapOn;
   document.getElementById('scrap-pct').value = scrapPct;
   document.getElementById('scrap-pct-row').classList.toggle('hidden', !scrapOn);
