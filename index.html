@@ -88,6 +88,101 @@
 
   .view-hidden{display:none !important;}
 
+  /* ---------- header actions + New menu (library shell) ---------- */
+  .header-actions{display:flex;align-items:center;gap:10px;}
+  .new-wrap{position:relative;}
+  .new-menu{
+    position:absolute;top:calc(100% + 6px);right:0;z-index:60;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:6px;min-width:190px;box-shadow:0 10px 28px rgba(0,0,0,.4);
+  }
+  .new-menu button{
+    display:block;width:100%;text-align:left;background:transparent;border:none;
+    color:var(--text);font-family:'Inter';font-weight:500;font-size:13.5px;
+    padding:9px 11px;border-radius:5px;cursor:pointer;
+  }
+  .new-menu button:hover{background:var(--panel-2);color:var(--gold-bright);}
+  .new-menu .nm-divider{height:1px;background:var(--line);margin:5px 6px;}
+
+  /* ---------- library home ---------- */
+  .lib-view{max-width:840px;margin:0 auto;}
+  .lib-section + .lib-section{margin-top:32px;}
+  .lib-cards{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));
+    gap:12px;margin-top:14px;
+  }
+  .lib-card{
+    position:relative;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:16px 16px 15px;cursor:pointer;
+    transition:border-color .15s, transform .1s;
+  }
+  .lib-card:hover{border-color:var(--gold);}
+  .lib-card:active{transform:translateY(1px);}
+  .lib-card .nm{
+    font-family:'Fraunces',serif;font-weight:600;font-size:16px;color:var(--text);
+    display:block;padding-right:24px;line-height:1.25;
+  }
+  .lib-card .sub{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.05em;
+    color:var(--text-dim);margin-top:7px;text-transform:uppercase;
+  }
+  .lib-card .del{
+    position:absolute;top:9px;right:9px;width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-dim);font-size:13px;line-height:1;opacity:0;transition:opacity .15s, background .15s, color .15s;
+  }
+  .lib-card:hover .del{opacity:1;}
+  .lib-card .del:hover{background:var(--crust);color:#fff;}
+
+  /* ---------- library search (the index field) ---------- */
+  .lib-toolbar{margin-bottom:26px;}
+  .lib-search{position:relative;display:flex;align-items:center;}
+  .lib-search .mag{
+    position:absolute;left:13px;font-size:14px;color:var(--text-dim);
+    pointer-events:none;line-height:1;
+  }
+  .lib-search input{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:var(--radius);color:var(--text);
+    font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.02em;
+    padding:11px 40px 11px 34px;transition:border-color .15s, box-shadow .15s;
+  }
+  .lib-search input::placeholder{color:var(--text-dim);letter-spacing:.04em;}
+  .lib-search input:focus{
+    outline:none;border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(200,155,60,.16);
+  }
+  .lib-search .clear{
+    position:absolute;right:9px;width:22px;height:22px;border-radius:50%;
+    display:none;align-items:center;justify-content:center;cursor:pointer;
+    color:var(--text-dim);font-size:13px;line-height:1;background:transparent;border:none;
+  }
+  .lib-search.has-q .clear{display:flex;}
+  .lib-search .clear:hover{background:var(--panel);color:var(--text);}
+  .lib-count{
+    font-family:'IBM Plex Mono',monospace;text-transform:none;letter-spacing:.04em;
+    font-size:11px;font-weight:500;color:var(--text-dim);
+  }
+
+  /* ---------- empty / no-result states ---------- */
+  .lib-empty{
+    grid-column:1/-1;border:1px dashed var(--line);border-radius:var(--radius);
+    padding:26px 20px;text-align:center;
+  }
+  .lib-empty .em-h{
+    font-family:'Fraunces',serif;font-weight:600;font-size:16px;color:var(--text-dim);
+  }
+  .lib-empty .em-sub{
+    font-family:'Inter';font-size:12.5px;color:var(--text-dim);
+    margin-top:6px;line-height:1.5;
+  }
+  .lib-empty .em-act{
+    display:inline-block;margin-top:14px;font-family:'Inter';font-weight:600;font-size:12.5px;
+    color:var(--gold-bright);cursor:pointer;border:1px solid var(--line);
+    padding:7px 14px;border-radius:5px;transition:border-color .15s, color .15s;
+  }
+  .lib-empty .em-act:hover{border-color:var(--gold);color:var(--gold);}
+
   .panel{
     background:var(--panel);
     border:1px solid var(--line);
@@ -536,14 +631,45 @@
         <div class="tag">baker's percentages &middot; live ticket</div>
       </div>
     </div>
-    <div class="tabs">
-      <button id="tab-recipes">Recipes</button>
-      <button id="tab-pizza" class="active">Pizza</button>
-      <button id="tab-bagel">Bagels</button>
-      <button id="tab-donut">Donuts</button>
-      <button id="tab-pantry">Pantry</button>
+    <div class="header-actions">
+      <div id="lib-actions" style="display:flex;align-items:center;gap:10px;">
+        <div class="new-wrap">
+          <button class="btn" id="new-btn">+ New</button>
+          <div class="new-menu view-hidden" id="new-menu">
+            <button data-new="pizza">Pizza formula</button>
+            <button data-new="bagel">Bagels formula</button>
+            <button data-new="donut">Donuts formula</button>
+            <div class="nm-divider"></div>
+            <button data-new="blank">Blank formula</button>
+            <button data-new="recipe">New recipe</button>
+          </div>
+        </div>
+        <button class="btn-secondary" id="pantry-btn">Pantry</button>
+      </div>
+      <div id="detail-actions" class="view-hidden">
+        <button class="btn-secondary" id="back-btn">← Library</button>
+      </div>
     </div>
   </header>
+
+  <div id="library-view" class="lib-view view-hidden">
+    <div class="lib-toolbar">
+      <div class="lib-search" id="lib-search">
+        <span class="mag">⌕</span>
+        <input type="text" id="lib-q" placeholder="Search formulas and recipes" autocomplete="off" spellcheck="false" />
+        <button class="clear" id="lib-q-clear" title="Clear (Esc)" aria-label="Clear search">✕</button>
+      </div>
+    </div>
+    <div class="lib-section" id="lib-formulas">
+      <p class="section-label">Formulas <span class="lib-count" id="count-formulas"></span></p>
+      <div class="lib-cards"></div>
+    </div>
+    <div class="lib-section" id="lib-recipes">
+      <p class="section-label">Recipes <span class="lib-count" id="count-recipes"></span></p>
+      <div class="lib-cards"></div>
+    </div>
+    <div id="lib-noresult" class="lib-empty view-hidden"></div>
+  </div>
 
   <div class="grid" id="main-grid">
     <div class="col-inputs">
@@ -570,15 +696,14 @@
       </div>
 
       <div id="recipes-view" class="view-hidden">
-        <div class="panel">
-          <p class="section-label">Recipe box</p>
-          <div class="recipe-chips" id="recipe-chips"></div>
-          <button class="add-extra" id="new-recipe-btn" style="margin-top:12px;">+ New recipe</button>
-        </div>
         <div id="recipe-editor-panel"></div>
       </div>
 
       <div id="recipe-view">
+
+      <div class="panel">
+        <input type="text" id="formula-name" class="rec-name-input" placeholder="Formula name (e.g. NY Style)" />
+      </div>
 
       <div class="panel">
         <p class="section-label">Batch size</p>
@@ -649,17 +774,6 @@
         <div id="assembly-fields"></div>
         <button class="add-pantry" id="add-assembly-btn">+ Add topping</button>
         <div class="assembly-summary" id="assembly-summary"></div>
-      </div>
-
-      <div class="panel">
-        <p class="section-label">Save this recipe</p>
-        <div class="save-row">
-          <input type="text" id="preset-name" placeholder="e.g. Friday night pizza" />
-          <button class="btn" id="save-btn">Save</button>
-        </div>
-        <div class="save-msg" id="save-msg"></div>
-        <div class="presets" id="preset-list"></div>
-        <div class="empty-note" id="preset-empty">No saved recipes yet — save one above to reload it any time.</div>
       </div>
 
       </div>
@@ -768,22 +882,45 @@ function defaultDonut(){
   };
 }
 
-let state = { pizza: defaultPizza(), bagel: defaultBagel(), donut: defaultDonut() };
+/* ---------- ids (declared early: used by the library seed below) ---------- */
+function rid(p){ return p + Math.random().toString(36).slice(2,9); }
+
+/* ---------- library: the single store of items — formula (dough) + recipe (general) ----------
+   Phase 1 of the roll-up. `library` is the source of truth. `state.pizza/bagel/donut` are live
+   POINTERS into the three seed formula items, so the existing dough engine (which reads
+   state[activeType]) keeps working unchanged. Recipe items live in the same library. */
+const DEFAULT_FORMULA = { pizza: defaultPizza, bagel: defaultBagel, donut: defaultDonut };
+function mkFormula(type){ return Object.assign(DEFAULT_FORMULA[type](), { id:rid('f'), kind:'formula' }); }
+function seedLibrary(data){
+  const lib = ['pizza','bagel','donut'].map(mkFormula);
+  // fold any existing recipes (shape-compatible) into the library, tagged as recipe items
+  (data && Array.isArray(data.recipes) ? data.recipes : []).forEach(r => lib.push(Object.assign({}, r, { kind:'recipe' })));
+  return lib;
+}
+function recipeItems(){ return library.filter(x => x.kind === 'recipe'); }
+function linkFormulaPointers(){
+  ['pizza','bagel','donut'].forEach(t => {
+    let f = library.find(x => x.kind === 'formula' && x.type === t);
+    if(!f){ f = mkFormula(t); library.push(f); }
+    state[t] = f;
+  });
+}
+
+let library = ['pizza','bagel','donut'].map(mkFormula);
+let state = { pizza: library[0], bagel: library[1], donut: library[2] };
 let activeType = 'pizza';
-let currentView = 'dough'; // 'dough' | 'pantry' | 'recipes'
+let screen = 'library'; // 'library' | 'formula' | 'recipe' | 'pantry'
 let showLineCosts = false;
 let presets = [];
 let scrapOn = false;
 let scrapPct = 3;
 let pantry = [];
-let recipes = [];
 let activeRecipeId = null;
 let fileHandle = null;
 let fileName = '';
 
-/* ---------- recipe box (general scalable recipes, separate from the dough engine) ---------- */
-function rid(p){ return p + Math.random().toString(36).slice(2,9); }
-function mkRecipe(name){ return { id:rid('rec'), name:name||'', yield:'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[] }; }
+/* ---------- recipe box (general scalable recipes; items live in `library` with kind:'recipe') ---------- */
+function mkRecipe(name){ return { id:rid('rec'), name:name||'', yield:'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[], kind:'recipe' }; }
 function mkRecipeIng(){ return { id:rid('ri'), amount:'', unit:'', name:'', note:'' }; }
 function mkEquip(){ return { id:rid('eq'), name:'', optional:false }; }
 function mkStep(){ return { id:rid('st'), text:'' }; }
@@ -894,30 +1031,33 @@ async function readAndApply(handle){
   applyData(data);
 }
 function applyData(data){
+  // Greenfield: the library is the store. An old file (no `library`) seeds fresh formulas and
+  // folds its recipes in; its `pantry` is kept as-is; its old dough `currentState` is ignored.
+  library = Array.isArray(data.library) ? data.library : seedLibrary(data);
   pantry = Array.isArray(data.pantry) ? data.pantry : [];
   presets = Array.isArray(data.presets) ? data.presets : [];
-  recipes = Array.isArray(data.recipes) ? data.recipes : [];
-  const cur = data.currentState;
+  linkFormulaPointers();
+  const cur = data.ui || data.currentState;
   if(cur){
-    if(cur.pizza) state.pizza = Object.assign(defaultPizza(), cur.pizza);
-    if(cur.bagel) state.bagel = Object.assign(defaultBagel(), cur.bagel);
-    if(cur.donut) state.donut = Object.assign(defaultDonut(), cur.donut);
     if(cur.activeType) activeType = cur.activeType;
     if(typeof cur.scrapOn === 'boolean') scrapOn = cur.scrapOn;
     if(typeof cur.scrapPct === 'number') scrapPct = cur.scrapPct;
     if(typeof cur.showLineCosts === 'boolean') showLineCosts = cur.showLineCosts;
     if(cur.activeRecipeId) activeRecipeId = cur.activeRecipeId;
   }
-  if(!recipes.find(r => r.id === activeRecipeId)) activeRecipeId = recipes[0] ? recipes[0].id : null;
-  refreshTabButtons();
+  const recs = recipeItems();
+  if(!recs.find(r => r.id === activeRecipeId)) activeRecipeId = recs[0] ? recs[0].id : null;
+  screen = 'library';
+  render();
 }
 
 /* One place that describes the full saved payload — used by file writes, localStorage, and Export.
    `formatVersion` (data-schema version) + `savedAt` (recency) are stamped in so a file's currency is
    knowable even if it gets renamed; applyData ignores them if absent. */
-const FORMAT_VERSION = 1;
+const FORMAT_VERSION = 2; // 2 = library model (formula + recipe items); 1 = legacy pizza/bagel/donut + recipes
 function currentData(){
-  return { formatVersion: FORMAT_VERSION, savedAt: new Date().toISOString(), pantry, presets, recipes, currentState: {pizza:state.pizza, bagel:state.bagel, donut:state.donut, activeType, scrapOn, scrapPct, showLineCosts, activeRecipeId} };
+  // `library` already contains the formula items that state.pizza/bagel/donut point into, plus recipe items.
+  return { formatVersion: FORMAT_VERSION, savedAt: new Date().toISOString(), library, pantry, presets, ui: {activeType, activeRecipeId, scrapOn, scrapPct, showLineCosts} };
 }
 /* Timestamped export name so synced copies self-sort by recency, e.g. dough-lab-data_2026-07-28_1430.json */
 function exportFilename(){
@@ -1571,9 +1711,11 @@ function renderTicket(){
   const driftsFromTarget = Math.abs(r.totalWeight - r.targetWeight) > 0.5;
 
   let html = '';
-  const titleText = (s.recipeName && s.recipeName.trim())
-    ? s.recipeName.trim()
-    : (({bagel:'Bagel Dough', donut:'Donut Dough'})[activeType] || 'Pizza Dough');
+  const titleText = (s.name && s.name.trim())
+    ? s.name.trim()
+    : (s.recipeName && s.recipeName.trim())
+      ? s.recipeName.trim()
+      : (({bagel:'Bagel Dough', donut:'Donut Dough'})[activeType] || 'Pizza Dough');
   html += `<div class="ticket-title">${escapeHtml(titleText)}</div>`;
   html += `<div class="ticket-sub">${s.pieces} × ${fmt(s.wpp)}g target`;
   if(scrapOn) html += ` <b>+${fmt(scrapPct)}% scrap</b>`;
@@ -1713,56 +1855,6 @@ function attachPantryAutocomplete(input, commit){
   input.addEventListener('blur', () => setTimeout(()=>{ if(acInput === input) closeAc(); }, 120));
 }
 
-/* ---------- presets UI ---------- */
-function renderPresets(){
-  const wrap = document.getElementById('preset-list');
-  const empty = document.getElementById('preset-empty');
-  wrap.innerHTML = '';
-  if(presets.length === 0){ empty.style.display = 'block'; return; }
-  empty.style.display = 'none';
-  presets.forEach(p => {
-    const chip = document.createElement('div');
-    chip.className = 'preset-chip';
-    chip.innerHTML = `<span>${escapeHtml(p.name)} <span style="color:var(--text-dim)">· ${p.type}</span></span><span class="x">✕</span>`;
-    chip.querySelector('span:first-child').onclick = () => loadPreset(p);
-    chip.querySelector('.x').onclick = (e) => { e.stopPropagation(); deletePreset(p.id); };
-    wrap.appendChild(chip);
-  });
-}
-function loadPreset(p){
-  activeType = p.type;
-  const base = { bagel:defaultBagel, donut:defaultDonut, pizza:defaultPizza }[p.type] || defaultPizza;
-  state[p.type] = Object.assign(base(), JSON.parse(JSON.stringify(p.state)));
-  renderAll();
-  scheduleSave();
-}
-function deletePreset(id){
-  presets = presets.filter(p => p.id !== id);
-  scheduleSave();
-  renderPresets();
-}
-document.getElementById('save-btn').onclick = async () => {
-  const nameInput = document.getElementById('preset-name');
-  const name = nameInput.value.trim();
-  const msg = document.getElementById('save-msg');
-  if(!name){ msg.textContent = 'Give it a name first.'; msg.style.color = 'var(--bad)'; return; }
-  state[activeType].recipeName = name;
-  const id = 'p_' + Date.now();
-  const newPreset = { id, name, type: activeType, state: JSON.parse(JSON.stringify(state[activeType])) };
-  presets.push(newPreset);
-  renderTicket();
-  const ok = await saveNow();
-  if(ok){
-    nameInput.value = '';
-    msg.textContent = 'Saved.'; msg.style.color = 'var(--good)';
-    setTimeout(()=>{ msg.textContent=''; }, 2200);
-  }else{
-    presets = presets.filter(p => p.id !== id); // roll back — it didn't actually persist
-    msg.textContent = 'Save failed — try again.'; msg.style.color = 'var(--bad)';
-  }
-  renderPresets();
-};
-
 document.getElementById('print-btn').onclick = () => { window.print(); };
 
 /* ---------- bench view (fullscreen locked recipe card + screen wake lock) ---------- */
@@ -1855,21 +1947,8 @@ function scaleYield(str, scale){
 }
 
 /* ---------- recipe box: render + edit + scale ---------- */
-function activeRecipe(){ return recipes.find(r => r.id === activeRecipeId) || null; }
-function renderRecipes(){ renderRecipeChips(); renderRecipeEditor(); renderRecipeCard(); }
-
-function renderRecipeChips(){
-  const wrap = document.getElementById('recipe-chips');
-  if(recipes.length === 0){ wrap.innerHTML = `<div class="empty-note" style="margin-top:0;">No recipes yet — "+ New recipe" to start your box.</div>`; return; }
-  wrap.innerHTML = recipes.map(r =>
-    `<div class="recipe-chip${r.id===activeRecipeId?' active':''}" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span><span class="x" title="Delete">✕</span></div>`
-  ).join('');
-  wrap.querySelectorAll('.recipe-chip').forEach(chip => {
-    const id = chip.getAttribute('data-id');
-    chip.querySelector('.nm').onclick = () => { activeRecipeId = id; renderRecipes(); scheduleSave(); };
-    chip.querySelector('.x').onclick = e => { e.stopPropagation(); deleteRecipe(id); };
-  });
-}
+function activeRecipe(){ return library.find(r => r.id === activeRecipeId && r.kind === 'recipe') || null; }
+function renderRecipes(){ renderRecipeEditor(); renderRecipeCard(); }
 
 function recIngRowHtml(ing){
   return `<div class="rec-row" data-id="${ing.id}">
@@ -1919,7 +1998,7 @@ function renderRecipeEditor(){
 function wireRecipeEditor(r){
   const el = document.getElementById('recipe-editor-panel');
   const byId = id => el.querySelector('#'+id);
-  byId('rec-name').oninput = e => { r.name = e.target.value; renderRecipeChips(); renderRecipeCard(); scheduleSave(); };
+  byId('rec-name').oninput = e => { r.name = e.target.value; renderRecipeCard(); scheduleSave(); };
   byId('rec-yield').oninput = e => { r.yield = e.target.value; renderRecipeCard(); scheduleSave(); };
   byId('rec-temp').oninput = e => { r.ovenTempF = e.target.value; renderRecipeCard(); scheduleSave(); };
   el.querySelectorAll('#rec-ing-rows .rec-row').forEach(row => {
@@ -1998,52 +2077,186 @@ function newRecipe(){
   const r = mkRecipe('New Recipe');
   r.ingredients.push(mkRecipeIng());
   r.steps.push(mkStep());
-  recipes.push(r);
-  activeRecipeId = r.id;
-  renderRecipes();
+  library.push(r);
+  openRecipe(r);
   const n = document.getElementById('rec-name'); if(n){ n.focus(); n.select(); }
-  scheduleSave();
 }
 function deleteRecipe(id){
-  const r = recipes.find(x=>x.id===id);
+  const r = library.find(x=>x.id===id && x.kind==='recipe');
   if(r && !confirm(`Delete recipe "${r.name||'Untitled'}"?`)) return;
-  recipes = recipes.filter(x=>x.id!==id);
-  if(activeRecipeId === id) activeRecipeId = recipes[0] ? recipes[0].id : null;
-  renderRecipes();
+  library = library.filter(x=>x.id!==id);
+  if(activeRecipeId === id){ const recs = recipeItems(); activeRecipeId = recs[0] ? recs[0].id : null; }
+  if(screen === 'recipe') screen = 'library';
+  render();
   scheduleSave();
 }
-document.getElementById('new-recipe-btn').onclick = newRecipe;
 
-const DOUGH_TABS = ['pizza','bagel','donut'];
-DOUGH_TABS.forEach(t => document.getElementById('tab-'+t).onclick = () => switchTab(t));
-document.getElementById('tab-pantry').onclick = () => switchTab('pantry');
-document.getElementById('tab-recipes').onclick = () => switchTab('recipes');
-function refreshTabButtons(){
-  DOUGH_TABS.forEach(t => document.getElementById('tab-'+t).classList.toggle('active', currentView==='dough' && activeType===t));
-  document.getElementById('tab-pantry').classList.toggle('active', currentView==='pantry');
-  document.getElementById('tab-recipes').classList.toggle('active', currentView==='recipes');
+/* ---------- library home + navigation (Phase 2 shell) ---------- */
+function formulaItems(){ return library.filter(x => x.kind === 'formula'); }
+function formulaTitle(s){
+  return (s.name||'').trim() || (s.recipeName||'').trim() ||
+    ({pizza:'Pizza', bagel:'Bagels', donut:'Donuts'}[s.type] || 'Formula');
 }
-function switchTab(t){
-  if(t === 'pantry') currentView = 'pantry';
-  else if(t === 'recipes') currentView = 'recipes';
-  else { currentView = 'dough'; activeType = t; }
-  refreshTabButtons();
-  updateViewVisibility();
-  renderAll();
+function openFormula(item){ activeType = item.type; state[item.type] = item; screen = 'formula'; render(); scheduleSave(); }
+function openRecipe(item){ activeRecipeId = item.id; screen = 'recipe'; render(); scheduleSave(); }
+function openPantry(){ screen = 'pantry'; render(); scheduleSave(); }
+function goLibrary(){ screen = 'library'; render(); scheduleSave(); }
+
+function newFormula(type, opts){
+  opts = opts || {};
+  const f = mkFormula(type);
+  f.name = '';
+  if(opts.blank){ f.extras = []; f.notes = ''; }
+  library.push(f);
+  openFormula(f);
+  const n = document.getElementById('formula-name'); if(n){ n.focus(); n.select(); }
+}
+function deleteFormula(id){
+  const f = library.find(x=>x.id===id && x.kind==='formula');
+  if(f && !confirm(`Delete formula "${formulaTitle(f)}"?`)) return;
+  library = library.filter(x=>x.id!==id);
+  linkFormulaPointers(); // resurrect a default if a whole dough type was removed; repoint state
+  render();
   scheduleSave();
+}
+
+let libQuery = '';
+function formulaSub(s){
+  const bits = [ s.type, fmt(s.hydration) + '%' ];
+  if(s.pfEnabled && s.pfMethod) bits.push(s.pfMethod);
+  return bits.join(' · ');
+}
+function recipeSub(r){
+  const bits = [];
+  if((r.yield||'').trim()) bits.push(r.yield.trim());
+  if(String(r.ovenTempF||'').trim()) bits.push('oven ' + r.ovenTempF + '°F');
+  return bits.join(' · ') || 'recipe';
+}
+function libMatch(item){
+  const q = libQuery.trim().toLowerCase();
+  if(!q) return true;
+  const hay = item.kind === 'formula'
+    ? formulaTitle(item) + ' ' + formulaSub(item)
+    : (item.name || '') + ' ' + recipeSub(item);
+  return hay.toLowerCase().includes(q);
+}
+
+function renderLibrary(){
+  const fWrap = document.querySelector('#lib-formulas .lib-cards');
+  const rWrap = document.querySelector('#lib-recipes .lib-cards');
+  const q = libQuery.trim();
+  const forms = formulaItems().filter(libMatch);
+  const recs  = recipeItems().filter(libMatch);
+  document.getElementById('count-formulas').textContent = forms.length ? '· ' + forms.length : '';
+  document.getElementById('count-recipes').textContent  = recs.length  ? '· ' + recs.length  : '';
+
+  // total miss on a search: one unified message, both sections hidden
+  const totalMiss = !!q && !forms.length && !recs.length;
+  document.getElementById('lib-formulas').classList.toggle('view-hidden', totalMiss);
+  document.getElementById('lib-recipes').classList.toggle('view-hidden', totalMiss);
+  const nr = document.getElementById('lib-noresult');
+  nr.classList.toggle('view-hidden', !totalMiss);
+  if(totalMiss){
+    nr.innerHTML = `<div class="em-h">Nothing matches “${escapeHtml(q)}”.</div><div class="em-sub">Try a different name, or clear the search.</div><span class="em-act" data-act="clear-q">Clear search</span>`;
+    const c = nr.querySelector('[data-act="clear-q"]');
+    if(c) c.onclick = () => { const i = document.getElementById('lib-q'); i.value = ''; i.dispatchEvent(new Event('input',{bubbles:true})); i.focus(); };
+    return;
+  }
+
+  fWrap.innerHTML = forms.map(s =>
+    `<div class="lib-card" data-id="${s.id}"><span class="nm">${escapeHtml(formulaTitle(s))}</span><span class="sub">${escapeHtml(formulaSub(s))}</span><span class="del" title="Delete">✕</span></div>`
+  ).join('') || (q
+    ? `<div class="lib-empty"><div class="em-h">Nothing matches “${escapeHtml(q)}”.</div><div class="em-sub">No formulas by that name.</div></div>`
+    : `<div class="lib-empty"><div class="em-h">No formulas yet.</div><div class="em-sub">Start one from a template.</div><span class="em-act" data-act="new-formula">+ New formula</span></div>`);
+
+  rWrap.innerHTML = recs.map(r =>
+    `<div class="lib-card" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span><span class="sub">${escapeHtml(recipeSub(r))}</span><span class="del" title="Delete">✕</span></div>`
+  ).join('') || (q
+    ? `<div class="lib-empty"><div class="em-h">Nothing matches “${escapeHtml(q)}”.</div><div class="em-sub">No recipes by that name.</div></div>`
+    : `<div class="lib-empty"><div class="em-h">No recipes yet.</div><div class="em-sub">Cookies, sauces, brines — anything that isn’t dough.</div><span class="em-act" data-act="new-recipe">+ New recipe</span></div>`);
+
+  fWrap.querySelectorAll('.lib-card').forEach(card => {
+    const id = card.getAttribute('data-id');
+    card.onclick = () => openFormula(library.find(x=>x.id===id));
+    card.querySelector('.del').onclick = e => { e.stopPropagation(); deleteFormula(id); };
+  });
+  rWrap.querySelectorAll('.lib-card').forEach(card => {
+    const id = card.getAttribute('data-id');
+    card.onclick = () => openRecipe(library.find(x=>x.id===id));
+    card.querySelector('.del').onclick = e => { e.stopPropagation(); deleteRecipe(id); };
+  });
+  const nf = fWrap.querySelector('[data-act="new-formula"]'); if(nf) nf.onclick = () => newFormula('pizza');
+  const nrAct = rWrap.querySelector('[data-act="new-recipe"]'); if(nrAct) nrAct.onclick = () => newRecipe();
+}
+
+/* + New menu + header nav wiring */
+document.getElementById('new-btn').onclick = e => {
+  e.stopPropagation();
+  document.getElementById('new-menu').classList.toggle('view-hidden');
+};
+document.querySelectorAll('#new-menu button').forEach(b => {
+  b.onclick = () => {
+    document.getElementById('new-menu').classList.add('view-hidden');
+    const w = b.getAttribute('data-new');
+    if(w === 'recipe') newRecipe();
+    else if(w === 'blank') newFormula('pizza', {blank:true});
+    else newFormula(w);
+  };
+});
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.new-wrap');
+  if(wrap && !wrap.contains(e.target)) document.getElementById('new-menu').classList.add('view-hidden');
+});
+document.getElementById('pantry-btn').onclick = openPantry;
+document.getElementById('back-btn').onclick = goLibrary;
+
+/* library search */
+(function(){
+  const box = document.getElementById('lib-search');
+  const input = document.getElementById('lib-q');
+  const clear = document.getElementById('lib-q-clear');
+  function apply(){
+    libQuery = input.value;
+    box.classList.toggle('has-q', !!libQuery.trim());
+    if(screen === 'library') renderLibrary();
+  }
+  input.addEventListener('input', apply);
+  clear.addEventListener('click', () => { input.value = ''; apply(); input.focus(); });
+  input.addEventListener('keydown', e => { if(e.key === 'Escape'){ input.value = ''; apply(); input.blur(); } });
+  document.addEventListener('keydown', e => {
+    if(e.key !== '/' || screen !== 'library' || e.metaKey || e.ctrlKey || e.altKey) return;
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if(/^(INPUT|TEXTAREA|SELECT)$/.test(tag)) return;
+    e.preventDefault(); input.focus();
+  });
+})();
+
+function render(){
+  updateViewVisibility();
+  updateHeaderActions();
+  if(screen === 'library') renderLibrary(); else renderAll();
+}
+function updateHeaderActions(){
+  const lib = screen === 'library';
+  document.getElementById('lib-actions').classList.toggle('view-hidden', !lib);
+  document.getElementById('detail-actions').classList.toggle('view-hidden', lib);
+  if(!lib) document.getElementById('new-menu').classList.add('view-hidden');
 }
 function updateViewVisibility(){
-  const dough = currentView === 'dough';
-  const recipes = currentView === 'recipes';
-  const pantry = currentView === 'pantry';
+  const formula = screen === 'formula';
+  const recipe = screen === 'recipe';
+  const pantry = screen === 'pantry';
+  const isLibrary = screen === 'library';
+  document.getElementById('library-view').classList.toggle('view-hidden', !isLibrary);
+  document.getElementById('main-grid').classList.toggle('view-hidden', isLibrary);
   // col-inputs children
-  document.getElementById('recipe-view').classList.toggle('view-hidden', !dough);
+  document.getElementById('recipe-view').classList.toggle('view-hidden', !formula);
   document.getElementById('pantry-view').classList.toggle('view-hidden', !pantry);
-  document.getElementById('recipes-view').classList.toggle('view-hidden', !recipes);
-  // ticket column holds the dough ticket OR the recipe card; shown for both, hidden only for pantry
+  document.getElementById('recipes-view').classList.toggle('view-hidden', !recipe);
+  // ticket column holds the dough ticket OR the recipe card; hidden only for pantry
   document.getElementById('col-ticket').classList.toggle('view-hidden', pantry);
-  document.getElementById('dough-ticket-wrap').classList.toggle('view-hidden', !dough);
-  document.getElementById('recipe-card-wrap').classList.toggle('view-hidden', !recipes);
+  document.getElementById('dough-ticket-wrap').classList.toggle('view-hidden', !formula);
+  document.getElementById('recipe-card-wrap').classList.toggle('view-hidden', !recipe);
   document.getElementById('main-grid').classList.toggle('solo-view', pantry);
 }
 
@@ -2078,9 +2291,11 @@ document.getElementById('f-flour').oninput = e => {
   onChange(false);
 };
 document.getElementById('notes').oninput = e => { state[activeType].notes = e.target.value; onChange(false); };
+document.getElementById('formula-name').oninput = e => { state[activeType].name = e.target.value; renderTicket(); scheduleSave(); };
 
 function renderAll(){
   const s = state[activeType];
+  document.getElementById('formula-name').value = s.name || s.recipeName || '';
   document.getElementById('scrap-enabled').checked = scrapOn;
   document.getElementById('scrap-pct').value = scrapPct;
   document.getElementById('scrap-pct-row').classList.toggle('hidden', !scrapOn);
@@ -2094,7 +2309,6 @@ function renderAll(){
   renderScaleFields();
   renderNotes();
   renderTicket();
-  renderPresets();
   renderPantryFields();
   renderAssemblyFields();
   renderRecipes();
@@ -2102,9 +2316,7 @@ function renderAll(){
 
 /* ---------- boot ---------- */
 (function init(){
-  refreshTabButtons();
-  updateViewVisibility();
-  renderAll();
+  render();
   if(HAS_FSA) tryReconnect();
   else initLocalStorage();
 })();
