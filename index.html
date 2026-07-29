@@ -691,8 +691,9 @@
         </div>
         <button class="btn-secondary" id="pantry-btn">Pantry</button>
       </div>
-      <div id="detail-actions" class="view-hidden">
+      <div id="detail-actions" class="view-hidden" style="display:flex;align-items:center;gap:10px;">
         <button class="btn-secondary" id="back-btn">← Library</button>
+        <button class="btn-secondary" id="dup-btn">Duplicate</button>
       </div>
     </div>
   </header>
@@ -2151,6 +2152,26 @@ function openFormula(item){ activeType = item.type; state[item.type] = item; scr
 function openRecipe(item){ activeRecipeId = item.id; screen = 'recipe'; render(); scheduleSave(); }
 function openPantry(){ screen = 'pantry'; render(); scheduleSave(); }
 function goLibrary(){ screen = 'library'; render(); scheduleSave(); }
+function duplicateActive(){
+  if(screen === 'formula'){
+    const orig = state[activeType];
+    const copy = JSON.parse(JSON.stringify(orig));
+    copy.id = rid('f');
+    copy.name = formulaTitle(orig) + ' copy';
+    library.push(copy);
+    openFormula(copy);
+    const n = document.getElementById('formula-name'); if(n){ n.focus(); n.select(); }
+  } else if(screen === 'recipe'){
+    const orig = activeRecipe();
+    if(!orig) return;
+    const copy = JSON.parse(JSON.stringify(orig));
+    copy.id = rid('rec');
+    copy.name = (orig.name || 'Untitled') + ' copy';
+    library.push(copy);
+    openRecipe(copy);
+    const n = document.getElementById('rec-name'); if(n){ n.focus(); n.select(); }
+  }
+}
 
 function newFormula(type, opts){
   opts = opts || {};
@@ -2328,6 +2349,7 @@ document.addEventListener('click', e => {
 });
 document.getElementById('pantry-btn').onclick = openPantry;
 document.getElementById('back-btn').onclick = goLibrary;
+document.getElementById('dup-btn').onclick = duplicateActive;
 
 /* library search */
 (function(){
@@ -2359,6 +2381,7 @@ function updateHeaderActions(){
   const lib = screen === 'library';
   document.getElementById('lib-actions').classList.toggle('view-hidden', !lib);
   document.getElementById('detail-actions').classList.toggle('view-hidden', lib);
+  document.getElementById('dup-btn').classList.toggle('view-hidden', !(screen === 'formula' || screen === 'recipe')); // nothing to duplicate on pantry
   if(!lib) document.getElementById('new-menu').classList.add('view-hidden');
 }
 function updateViewVisibility(){
