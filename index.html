@@ -719,6 +719,7 @@
       <div id="detail-actions" class="view-hidden" style="display:flex;align-items:center;gap:10px;">
         <button class="btn-secondary" id="back-btn">← Library</button>
         <button class="btn-secondary" id="dup-btn">Duplicate</button>
+        <button class="btn-secondary" id="detail-pantry-btn">Pantry</button>
       </div>
     </div>
   </header>
@@ -2077,7 +2078,9 @@ function parseAmount(str){
   const n = parseFloat(s);
   return isNaN(n) ? null : n;
 }
-const UNICODE_FRAC = {0.125:'⅛',0.25:'¼',0.333:'⅓',0.375:'⅜',0.5:'½',0.625:'⅝',0.667:'⅔',0.75:'¾',0.875:'⅞'};
+/* Full-size ASCII fractions ("1 1/2", "3/4") — chosen over tiny Unicode glyphs (½, ⅜…) for
+   legibility on the card, bench view, and printed card. parseAmount already reads this format. */
+const ASCII_FRAC = {0.125:'1/8',0.25:'1/4',0.333:'1/3',0.375:'3/8',0.5:'1/2',0.625:'5/8',0.667:'2/3',0.75:'3/4',0.875:'7/8'};
 function formatAmount(n){
   if(n == null) return '';
   if(Math.abs(n) < 1e-9) return '0';
@@ -2088,9 +2091,9 @@ function formatAmount(n){
   candidates.forEach(c => { const d = Math.abs(frac - c); if(d < bd){ bd = d; best = c; } });
   let w = whole, f = best;
   if(f === 1){ w += 1; f = 0; }
-  const fracStr = f === 0 ? '' : (UNICODE_FRAC[f] || '');
-  if(w === 0 && fracStr) return fracStr;
-  if(fracStr) return w + fracStr;
+  const fracStr = f === 0 ? '' : (ASCII_FRAC[f] || '');
+  if(w === 0 && fracStr) return fracStr;          // "3/4"
+  if(fracStr) return w + ' ' + fracStr;           // "1 1/2"
   return String(w);
 }
 function displayAmount(ing, scale){
@@ -2114,7 +2117,7 @@ function renderRecipes(){ renderRecipeEditor(); renderRecipeCard(); }
 
 function recIngRowHtml(ing){
   return `<div class="rec-row" data-id="${ing.id}">
-    <input type="text" class="rec-amt" value="${escapeHtml(ing.amount)}" placeholder="¾" title="Amount (e.g. 3/4, 1 1/2, 2)" />
+    <input type="text" class="rec-amt" value="${escapeHtml(ing.amount)}" placeholder="3/4" title="Amount (e.g. 3/4, 1 1/2, 2)" />
     <select class="rec-unit">${RECIPE_UNITS.map(u=>`<option value="${u}" ${ing.unit===u?'selected':''}>${u||'—'}</option>`).join('')}</select>
     <input type="text" class="rec-iname" value="${escapeHtml(ing.name)}" placeholder="ingredient" />
     <input type="text" class="rec-note" value="${escapeHtml(ing.note)}" placeholder="note (optional)" />
@@ -2462,6 +2465,7 @@ document.addEventListener('click', e => {
   if(wrap && !wrap.contains(e.target)) document.getElementById('new-menu').classList.add('view-hidden');
 });
 document.getElementById('pantry-btn').onclick = openPantry;
+document.getElementById('detail-pantry-btn').onclick = openPantry;
 document.getElementById('save-chip').onclick = openPantry; // jump to the Data File panel
 document.getElementById('back-btn').onclick = goLibrary;
 document.getElementById('dup-btn').onclick = duplicateActive;
@@ -2498,6 +2502,7 @@ function updateHeaderActions(){
   document.getElementById('lib-actions').classList.toggle('view-hidden', !lib);
   document.getElementById('detail-actions').classList.toggle('view-hidden', lib);
   document.getElementById('dup-btn').classList.toggle('view-hidden', !(screen === 'formula' || screen === 'recipe')); // nothing to duplicate on pantry
+  document.getElementById('detail-pantry-btn').classList.toggle('view-hidden', screen === 'pantry'); // already on pantry
   if(!lib) document.getElementById('new-menu').classList.add('view-hidden');
 }
 function updateViewVisibility(){
