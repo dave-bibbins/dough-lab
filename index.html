@@ -315,8 +315,9 @@
   /* drag-to-reorder (pointer-based, works on touch + mouse) */
   .drag-handle{
     flex:none;align-self:center;cursor:grab;touch-action:none;user-select:none;
-    color:var(--text-dim);opacity:.4;font-size:13px;line-height:1;padding:2px 3px;
-    transition:opacity .12s, color .12s;
+    -webkit-user-select:none;-webkit-touch-callout:none;
+    color:var(--text-dim);opacity:.4;font-size:14px;line-height:1;padding:4px 7px;
+    min-width:18px;text-align:center;transition:opacity .12s, color .12s;
   }
   .drag-handle:hover{opacity:1;color:var(--gold-bright);}
   .drag-handle:active{cursor:grabbing;}
@@ -1621,13 +1622,18 @@ function attachSortable(container, rowSel, commit){
         document.removeEventListener('pointermove', move);
         document.removeEventListener('pointerup', up);
         document.removeEventListener('pointercancel', up);
+        document.removeEventListener('touchmove', blockScroll);
         row.classList.remove('dragging');
         const ids = [...container.querySelectorAll(rowSel)].map(r => r.getAttribute('data-id'));
         commit(ids);
       };
+      // iOS Safari treats the finger-drag as a page scroll and fires pointercancel, killing the
+      // drag before it moves. Swallow touchmove while dragging so scrolling can't hijack it.
+      const blockScroll = ev => ev.preventDefault();
       document.addEventListener('pointermove', move, {passive:false});
       document.addEventListener('pointerup', up);
       document.addEventListener('pointercancel', up);
+      document.addEventListener('touchmove', blockScroll, {passive:false});
     });
   });
 }
