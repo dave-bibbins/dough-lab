@@ -2429,7 +2429,7 @@ function renderLibrary(){
     ? `<div class="lib-empty"><div class="em-h">No recipes match.</div></div>`
     : `<div class="lib-empty"><div class="em-h">No recipes yet.</div><div class="em-sub">Cookies, sauces, brines — anything that isn’t dough.</div><span class="em-act" data-act="new-recipe">+ New Recipe</span></div>`;
   rWrap.innerHTML = recs.map(r =>
-    `<div class="lib-card" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span><span class="sub">${escapeHtml(recipeSub(r))}</span>${cardTagsHtml(r)}<span class="del" title="Delete">✕</span></div>`
+    `<div class="lib-card" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span>${cardTagsHtml(r)}<span class="del" title="Delete">✕</span></div>`
   ).join('') || emptyR;
 
   fWrap.querySelectorAll('.lib-card').forEach(card => {
