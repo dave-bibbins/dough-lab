@@ -681,12 +681,12 @@
         <div class="new-wrap">
           <button class="btn" id="new-btn">+ New</button>
           <div class="new-menu view-hidden" id="new-menu">
-            <button data-new="pizza">Pizza formula</button>
-            <button data-new="bagel">Bagels formula</button>
-            <button data-new="donut">Donuts formula</button>
+            <button data-new="pizza">Pizza Formula</button>
+            <button data-new="bagel">Bagels Formula</button>
+            <button data-new="donut">Donuts Formula</button>
             <div class="nm-divider"></div>
-            <button data-new="blank">Blank formula</button>
-            <button data-new="recipe">New recipe</button>
+            <button data-new="blank">Blank Formula</button>
+            <button data-new="recipe">New Recipe</button>
           </div>
         </div>
         <button class="btn-secondary" id="pantry-btn">Pantry</button>
@@ -723,21 +723,21 @@
 
       <div id="pantry-view" class="view-hidden">
         <div class="panel" id="datafile-panel">
-          <p class="section-label">Data file</p>
+          <p class="section-label">Data File</p>
           <div class="datafile-status" id="datafile-status">Checking for a connected data file…</div>
           <div class="datafile-actions" id="datafile-actions"></div>
           <div class="datafile-actions" id="datafile-portable">
-            <button class="btn-secondary" id="export-btn">Export backup</button>
+            <button class="btn-secondary" id="export-btn">Export Backup</button>
             <button class="btn-secondary" id="import-btn">Import…</button>
           </div>
         </div>
 
         <div class="panel">
-          <p class="section-label">Pantry (shared pricing)</p>
+          <p class="section-label">Pantry (Shared Pricing)</p>
           <div id="pantry-fields"></div>
           <div class="pantry-add-row">
-            <button class="add-pantry" id="add-pantry-btn">+ Add simple item</button>
-            <button class="add-pantry" id="add-compound-btn">+ Add compound item</button>
+            <button class="add-pantry" id="add-pantry-btn">+ Add Simple Item</button>
+            <button class="add-pantry" id="add-compound-btn">+ Add Compound Item</button>
           </div>
         </div>
       </div>
@@ -754,14 +754,14 @@
       </div>
 
       <div class="panel">
-        <p class="section-label">Batch size</p>
+        <p class="section-label">Batch Size</p>
         <div class="scale-row">
           <div class="field">
             <label id="pieces-label">Balls</label>
             <div class="inp-wrap"><input type="number" id="pieces" min="1" step="1" /></div>
           </div>
           <div class="field">
-            <label>Weight each</label>
+            <label>Weight Each</label>
             <div class="inp-wrap"><input type="number" id="wpp" min="1" step="1" /><span class="unit">g</span></div>
           </div>
         </div>
@@ -774,7 +774,7 @@
         </div>
         <div class="toggle-row" style="border-top:1px solid var(--line);margin-top:4px;padding-top:12px;">
           <div>
-            <label style="font-size:13.5px;">Scrap allowance</label>
+            <label style="font-size:13.5px;">Scrap Allowance</label>
           </div>
           <div style="display:flex;align-items:center;gap:12px;">
             <div class="inp-wrap-inline subfields hidden" id="scrap-pct-row">
@@ -789,20 +789,20 @@
       </div>
 
       <div class="panel">
-        <p class="section-label">Formula (% of flour)</p>
+        <p class="section-label">Formula (% of Flour)</p>
         <div id="pct-fields"></div>
       </div>
 
       <div class="panel">
-        <p class="section-label">Other ingredients</p>
+        <p class="section-label">Other Ingredients</p>
         <div id="extra-fields"></div>
-        <button class="add-extra" id="add-extra-btn">+ Add ingredient</button>
+        <button class="add-extra" id="add-extra-btn">+ Add Ingredient</button>
       </div>
 
       <div class="panel">
         <div class="toggle-row">
           <div>
-            <label style="font-size:13.5px;">Preferment / sponge</label>
+            <label style="font-size:13.5px;">Preferment / Sponge</label>
           </div>
           <label class="switch">
             <input type="checkbox" id="pf-enabled" />
@@ -813,14 +813,14 @@
       </div>
 
       <div class="panel">
-        <p class="section-label">Method notes</p>
+        <p class="section-label">Method Notes</p>
         <textarea id="notes"></textarea>
       </div>
 
       <div class="panel" id="assembly-panel">
-        <p class="section-label">Finished pie cost</p>
+        <p class="section-label">Finished Pie Cost</p>
         <div id="assembly-fields"></div>
-        <button class="add-pantry" id="add-assembly-btn">+ Add topping</button>
+        <button class="add-pantry" id="add-assembly-btn">+ Add Topping</button>
         <div class="assembly-summary" id="assembly-summary"></div>
       </div>
 
@@ -832,7 +832,7 @@
       <div class="ticket-wrap" id="dough-ticket-wrap">
         <div class="ticket-toolbar" id="ticket-toolbar">
           <div class="line-cost-toggle">
-            <span>Show item costs</span>
+            <span>Show Item Costs</span>
             <label class="switch">
               <input type="checkbox" id="show-line-costs" />
               <span class="slider"></span>
@@ -1257,16 +1257,16 @@ function updateDatafileUI(mode, pendingHandle){
   }
   if(mode === 'connected'){
     statusEl.innerHTML = `Connected: <b>${escapeHtml(fileName)}</b>`;
-    actionsEl.innerHTML = `<button class="btn-secondary" id="df-switch">Use a different file</button>`;
+    actionsEl.innerHTML = `<button class="btn-secondary" id="df-switch">Use a Different File</button>`;
     document.getElementById('df-switch').onclick = connectExisting;
   }else if(mode === 'reconnect'){
     statusEl.innerHTML = `Connection to <b>${escapeHtml(fileName)}</b> needs to be reconfirmed.`;
-    actionsEl.innerHTML = `<button class="btn-secondary" id="df-reconnect">Reconnect</button><button class="btn-secondary" id="df-switch">Use a different file</button>`;
+    actionsEl.innerHTML = `<button class="btn-secondary" id="df-reconnect">Reconnect</button><button class="btn-secondary" id="df-switch">Use a Different File</button>`;
     document.getElementById('df-reconnect').onclick = () => reconnectPermission(pendingHandle);
     document.getElementById('df-switch').onclick = connectExisting;
   }else{
     statusEl.innerHTML = "Not connected — nothing will be saved until you connect a data file.";
-    actionsEl.innerHTML = `<button class="btn-secondary" id="df-create">Create data file</button><button class="btn-secondary" id="df-open">Open existing file</button>`;
+    actionsEl.innerHTML = `<button class="btn-secondary" id="df-create">Create Data File</button><button class="btn-secondary" id="df-open">Open Existing File</button>`;
     document.getElementById('df-create').onclick = connectNew;
     document.getElementById('df-open').onclick = connectExisting;
   }
@@ -1397,7 +1397,7 @@ function renderPctFields(){
       <div class="inp-wrap"><input type="number" value="100" disabled style="opacity:.5" /><span class="unit">%</span></div>
     </div>
     <div class="field">
-      <label>Water (hydration)</label>
+      <label>Water (Hydration)</label>
       <div class="inp-wrap"><input type="number" id="f-hydration" step="0.5" value="${s.hydration}" /><span class="unit">%</span></div>
     </div>
     <div class="field">
@@ -1531,7 +1531,7 @@ function renderPantryFields(){
   const compounds = pantry.filter(p => p.kind === 'compound');
   let html = simples.map(simpleRowHtml).join('');
   if(compounds.length){
-    html += `<div class="pantry-group-label">Compound items</div>`;
+    html += `<div class="pantry-group-label">Compound Items</div>`;
     html += compounds.map(compoundRowHtml).join('');
   }
   el.innerHTML = html;
@@ -1659,12 +1659,12 @@ function renderAssemblySummary(){
   const s = state.pizza;
   const ballCost = costPerPiece(s);
   const toppingsCost = calcAssemblyTotal(s.assembly);
-  let html = `<div class="assembly-line"><span>Dough ball</span><span>${ballCost!=null ? fmtMoney(ballCost) : '—'}</span></div>`;
+  let html = `<div class="assembly-line"><span>Dough Ball</span><span>${ballCost!=null ? fmtMoney(ballCost) : '—'}</span></div>`;
   s.assembly.forEach(item => {
     const c = assemblyItemCost(item);
     html += `<div class="assembly-line sub"><span>${escapeHtml(item.name || 'Topping')}</span><span>${c!=null ? fmtMoney(c) : '—'}</span></div>`;
   });
-  html += `<div class="assembly-line total"><span>Pie cost</span><span>${ballCost!=null ? fmtMoney(ballCost + toppingsCost) : '—'}</span></div>`;
+  html += `<div class="assembly-line total"><span>Pie Cost</span><span>${ballCost!=null ? fmtMoney(ballCost + toppingsCost) : '—'}</span></div>`;
   el.innerHTML = html;
 }
 
@@ -1676,11 +1676,11 @@ function renderPfFields(){
 
   const hydRow = isSponge
     ? `<div class="field">
-         <label>Preferment hydration<span class="hint">Sponge uses all the formula's water — not set directly</span></label>
+         <label>Preferment Hydration<span class="hint">Sponge uses all the formula's water — not set directly</span></label>
          <div class="inp-wrap"><input type="text" id="pf-hyd-derived" value="${derivedHyd!=null ? fmt(derivedHyd) : '—'}" disabled style="opacity:.55;width:74px;text-align:right;" /><span class="unit">%</span></div>
        </div>`
     : `<div class="field">
-         <label>Preferment hydration<span class="hint">100% = classic poolish. Lower = stiffer biga.</span></label>
+         <label>Preferment Hydration<span class="hint">100% = classic poolish. Lower = stiffer biga.</span></label>
          <div class="inp-wrap"><input type="number" id="pf-hyd" step="1" value="${s.pfHydration}" /><span class="unit">%</span></div>
        </div>`;
 
@@ -1697,16 +1697,16 @@ function renderPfFields(){
       </div>
     </div>
     <div class="field">
-      <label>Flour into preferment</label>
+      <label>Flour into Preferment</label>
       <div class="inp-wrap"><input type="number" id="pf-pct" step="1" value="${s.pfPercent}" /><span class="unit">%</span></div>
     </div>
     ${hydRow}
     <div class="field">
-      <label>Yeast in preferment<span class="hint">% of the preferment's flour</span></label>
+      <label>Yeast in Preferment<span class="hint">% of the preferment's flour</span></label>
       <div class="inp-wrap"><input type="number" id="pf-yeast" step="0.05" value="${s.pfYeast}" /><span class="unit">%</span></div>
     </div>
     <div class="field">
-      <label>Build time</label>
+      <label>Build Time</label>
       <div class="inp-wrap"><input type="number" id="pf-hours" step="1" value="${s.pfHours}" /><span class="unit">h</span></div>
     </div>
     <div class="field">
@@ -1778,7 +1778,7 @@ function renderTicket(){
     html += line('Water', r.pf.water, true);
     html += line('Yeast', r.pf.yeast, true);
 
-    html += `<div class="group-heading">Final mix — add to ripe ${pfLabel.toLowerCase()}</div>`;
+    html += `<div class="group-heading">Final Mix — add to ripe ${pfLabel.toLowerCase()}</div>`;
     html += line('Flour', r.final.flour);
     html += line('Water', r.final.water);
     html += line('Salt', r.final.salt);
@@ -1793,15 +1793,15 @@ function renderTicket(){
     r.extras.forEach(e => { if(e.grams > 0) html += line(e.name, e.grams); });
   }
 
-  html += `<div class="total-row"><span>Total dough</span><span>${fmt(round(r.totalWeight,1))} g</span></div>`;
+  html += `<div class="total-row"><span>Total Dough</span><span>${fmt(round(r.totalWeight,1))} g</span></div>`;
 
   const cost = calcCost(r);
   if(cost != null){
-    html += `<div class="cost-row"><span>Est. cost</span><span class="amt">${fmtMoney(cost)}<span class="per"> (${fmtMoney(cost / s.pieces)}/ea)</span></span></div>`;
+    html += `<div class="cost-row"><span>Est. Cost</span><span class="amt">${fmtMoney(cost)}<span class="per"> (${fmtMoney(cost / s.pieces)}/ea)</span></span></div>`;
   }
 
   html += `<div class="method-block yeast-note">`;
-  html += `<div class="method-title">Yeast note</div>`;
+  html += `<div class="method-title">Yeast Note</div>`;
   html += `<div class="method">Percentages are entered as ${YEAST_LABELS[s.yeastType]}${s.yeastType!=='idy' ? ` (×${YEAST_FACTORS[s.yeastType]} vs. instant dry)` : ''}. Effective yeast: <b>${fmt(s.yeast * YEAST_FACTORS[s.yeastType])}%</b> of total flour.</div>`;
   html += `</div>`;
 
@@ -2010,7 +2010,7 @@ function recIngRowHtml(ing){
 function recEqRowHtml(eq){
   return `<div class="rec-row" data-id="${eq.id}">
     <input type="text" class="rec-eqname" value="${escapeHtml(eq.name)}" placeholder="equipment" />
-    <label class="rec-opt"><input type="checkbox" class="rec-eqopt" ${eq.optional?'checked':''} /> optional</label>
+    <label class="rec-opt"><input type="checkbox" class="rec-eqopt" ${eq.optional?'checked':''} /> Optional</label>
     <button class="rec-rm" title="Remove">✕</button>
   </div>`;
 }
@@ -2026,21 +2026,21 @@ function renderRecipeEditor(){
   const r = activeRecipe();
   if(!r){ el.innerHTML = ''; return; }
   el.innerHTML = `<div class="panel">
-    <p class="section-label">Edit recipe</p>
+    <p class="section-label">Edit Recipe</p>
     <input type="text" class="rec-name-input" id="rec-name" value="${escapeHtml(r.name)}" placeholder="Untitled" />
     <div class="tag-edit" id="recipe-tags"></div>
     <div class="rec-yield-row"><span style="font-size:12px;color:var(--text-dim);">Yield</span><input type="text" id="rec-yield" value="${escapeHtml(r.yield||'')}" placeholder="e.g. 24 cookies, 1 pot of chili" /></div>
     <p class="section-label" style="margin-top:18px;">Equipment and Prep</p>
-    <div class="rec-temp-row"><span style="font-size:12px;color:var(--text-dim);">Oven temp</span><input type="number" id="rec-temp" value="${escapeHtml(String(r.ovenTempF))}" placeholder="—" /><span style="font-size:12px;color:var(--text-dim);">°F</span></div>
+    <div class="rec-temp-row"><span style="font-size:12px;color:var(--text-dim);">Oven Temp</span><input type="number" id="rec-temp" value="${escapeHtml(String(r.ovenTempF))}" placeholder="—" /><span style="font-size:12px;color:var(--text-dim);">°F</span></div>
     <div id="rec-eq-rows">${r.equipment.map(recEqRowHtml).join('')}</div>
-    <button class="rec-add" id="rec-add-eq">+ Add equipment</button>
+    <button class="rec-add" id="rec-add-eq">+ Add Equipment</button>
     <p class="section-label" style="margin-top:18px;">Ingredients</p>
     <div id="rec-ing-rows">${r.ingredients.map(recIngRowHtml).join('')}</div>
-    <button class="rec-add" id="rec-add-ing">+ Add ingredient</button>
+    <button class="rec-add" id="rec-add-ing">+ Add Ingredient</button>
     <p class="section-label" style="margin-top:18px;">Steps</p>
     <div id="rec-step-rows">${r.steps.map((s,i)=>recStepRowHtml(s,i)).join('')}</div>
-    <button class="rec-add" id="rec-add-step">+ Add step</button>
-    <div class="rec-editor-foot"><button class="rec-delete" id="rec-del">Delete recipe</button></div>
+    <button class="rec-add" id="rec-add-step">+ Add Step</button>
+    <div class="rec-editor-foot"><button class="rec-delete" id="rec-del">Delete Recipe</button></div>
   </div>`;
   wireRecipeEditor(r);
 }
@@ -2295,7 +2295,7 @@ function renderLibrary(){
   nr.classList.toggle('view-hidden', !totalMiss);
   if(totalMiss){
     const what = q ? `“${escapeHtml(q)}”` : `#${escapeHtml(libTagFilter)}`;
-    nr.innerHTML = `<div class="em-h">Nothing matches ${what}.</div><div class="em-sub">Try a different filter, or clear it.</div><span class="em-act" data-act="clear-filters">Clear filters</span>`;
+    nr.innerHTML = `<div class="em-h">Nothing matches ${what}.</div><div class="em-sub">Try a different filter, or clear it.</div><span class="em-act" data-act="clear-filters">Clear Filters</span>`;
     const c = nr.querySelector('[data-act="clear-filters"]');
     if(c) c.onclick = clearLibFilters;
     return;
@@ -2303,14 +2303,14 @@ function renderLibrary(){
 
   const emptyF = filtering
     ? `<div class="lib-empty"><div class="em-h">No formulas match.</div></div>`
-    : `<div class="lib-empty"><div class="em-h">No formulas yet.</div><div class="em-sub">Start one from a template.</div><span class="em-act" data-act="new-formula">+ New formula</span></div>`;
+    : `<div class="lib-empty"><div class="em-h">No formulas yet.</div><div class="em-sub">Start one from a template.</div><span class="em-act" data-act="new-formula">+ New Formula</span></div>`;
   fWrap.innerHTML = forms.map(s =>
     `<div class="lib-card" data-id="${s.id}"><span class="nm">${escapeHtml(formulaTitle(s))}</span>${cardTagsHtml(s)}<span class="del" title="Delete">✕</span></div>`
   ).join('') || emptyF;
 
   const emptyR = filtering
     ? `<div class="lib-empty"><div class="em-h">No recipes match.</div></div>`
-    : `<div class="lib-empty"><div class="em-h">No recipes yet.</div><div class="em-sub">Cookies, sauces, brines — anything that isn’t dough.</div><span class="em-act" data-act="new-recipe">+ New recipe</span></div>`;
+    : `<div class="lib-empty"><div class="em-h">No recipes yet.</div><div class="em-sub">Cookies, sauces, brines — anything that isn’t dough.</div><span class="em-act" data-act="new-recipe">+ New Recipe</span></div>`;
   rWrap.innerHTML = recs.map(r =>
     `<div class="lib-card" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span><span class="sub">${escapeHtml(recipeSub(r))}</span>${cardTagsHtml(r)}<span class="del" title="Delete">✕</span></div>`
   ).join('') || emptyR;
