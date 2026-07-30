@@ -365,6 +365,9 @@
   .group-heading:first-child{margin-top:0;}
   .total-row{display:flex;justify-content:space-between;font-size:16px;font-weight:700;padding-top:10px;margin-top:4px;border-top:2px solid var(--paper-ink);}
   .method{font-size:11.5px;line-height:1.6;color:var(--paper-ink);margin-top:4px;white-space:pre-wrap;}
+  .ticket-steps{margin:4px 0 0;padding-left:18px;}
+  .ticket-steps li{font-size:11.5px;line-height:1.6;color:var(--paper-ink);margin-bottom:3px;}
+  body.bench .ticket-steps li{font-size:clamp(16px,2.6vw,32px);line-height:1.5;margin-bottom:6px;}
   .method b{color:var(--crust);}
   .method-block{margin-top:10px;}
   .method-title{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--crust);margin-bottom:4px;font-weight:600;}
@@ -855,6 +858,12 @@
         <textarea id="notes"></textarea>
       </div>
 
+      <div class="panel">
+        <p class="section-label">Steps</p>
+        <div id="formula-step-rows"></div>
+        <button class="rec-add" id="formula-add-step">+ Add Step</button>
+      </div>
+
       <div class="panel" id="assembly-panel">
         <p class="section-label">Finished Pie Cost</p>
         <div id="assembly-fields"></div>
@@ -976,7 +985,7 @@ function rid(p){ return p + Math.random().toString(36).slice(2,9); }
    POINTERS into the three seed formula items, so the existing dough engine (which reads
    state[activeType]) keeps working unchanged. Recipe items live in the same library. */
 const DEFAULT_FORMULA = { pizza: defaultPizza, bagel: defaultBagel, donut: defaultDonut };
-function mkFormula(type){ return Object.assign(DEFAULT_FORMULA[type](), { id:rid('f'), kind:'formula', tags:[], subtitle:'' }); }
+function mkFormula(type){ return Object.assign(DEFAULT_FORMULA[type](), { id:rid('f'), kind:'formula', tags:[], subtitle:'', steps:[] }); }
 function seedLibrary(data){
   const lib = ['pizza','bagel','donut'].map(mkFormula);
   // fold any existing recipes (shape-compatible) into the library, tagged as recipe items
@@ -1877,6 +1886,18 @@ function renderScaleFields(){
 function renderNotes(){
   document.getElementById('notes').value = state[activeType].notes;
 }
+function renderFormulaSteps(){
+  const s = state[activeType];
+  if(!Array.isArray(s.steps)) s.steps = [];
+  const wrap = document.getElementById('formula-step-rows');
+  wrap.innerHTML = s.steps.map((st,i) => recStepRowHtml(st,i)).join('');
+  wrap.querySelectorAll('.rec-step').forEach(row => {
+    const id = row.getAttribute('data-id');
+    const st = s.steps.find(x => x.id === id);
+    row.querySelector('.rec-steptext').oninput = e => { st.text = e.target.value; renderTicket(); scheduleSave(); };
+    row.querySelector('.rec-rm').onclick = () => { s.steps = s.steps.filter(x => x.id !== id); renderFormulaSteps(); renderTicket(); scheduleSave(); };
+  });
+}
 
 /* ---------- render: ticket ---------- */
 function renderTicket(){
@@ -1935,6 +1956,14 @@ function renderTicket(){
     html += `<div class="method-block">`;
     html += `<div class="method-title">Method</div>`;
     html += `<div class="method">${escapeHtml(s.notes)}</div>`;
+    html += `</div>`;
+  }
+
+  const steps = Array.isArray(s.steps) ? s.steps.filter(st => (st.text||'').trim()) : [];
+  if(steps.length){
+    html += `<div class="method-block">`;
+    html += `<div class="method-title">Steps</div>`;
+    html += `<ol class="ticket-steps">${steps.map(st => `<li>${escapeHtml(st.text)}</li>`).join('')}</ol>`;
     html += `</div>`;
   }
 
@@ -2571,6 +2600,12 @@ document.getElementById('f-flour').oninput = e => {
   onChange(false);
 };
 document.getElementById('notes').oninput = e => { state[activeType].notes = e.target.value; onChange(false); };
+document.getElementById('formula-add-step').onclick = () => {
+  const s = state[activeType]; if(!Array.isArray(s.steps)) s.steps = [];
+  const it = mkStep(); s.steps.push(it);
+  renderFormulaSteps(); renderTicket(); scheduleSave();
+  const ta = document.querySelector(`#formula-step-rows .rec-step[data-id="${it.id}"] .rec-steptext`); if(ta) ta.focus();
+};
 document.getElementById('formula-name').oninput = e => { state[activeType].name = e.target.value; renderTicket(); scheduleSave(); };
 document.getElementById('formula-subtitle').oninput = e => { state[activeType].subtitle = e.target.value; scheduleSave(); };
 
@@ -2591,6 +2626,7 @@ function renderAll(){
   renderPfFields();
   renderScaleFields();
   renderNotes();
+  renderFormulaSteps();
   renderTicket();
   renderPantryFields();
   renderAssemblyFields();
