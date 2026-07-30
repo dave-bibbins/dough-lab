@@ -126,6 +126,11 @@
     font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.05em;
     color:var(--text-dim);margin-top:7px;text-transform:uppercase;
   }
+  .lib-card .card-sub{
+    display:block;font-family:'Inter';font-size:12px;color:var(--text-dim);
+    margin-top:5px;padding-right:24px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
   .lib-card .del{
     position:absolute;top:9px;right:9px;width:22px;height:22px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
@@ -594,6 +599,10 @@
   .rec-name-input::placeholder{color:var(--text-dim);}
   .rec-name-input:hover{background:var(--panel-2);border-color:var(--line);}
   .rec-name-input:focus{background:var(--panel-2);border-color:var(--gold);outline:none;}
+  .rec-subtitle-input{width:100%;background:transparent;border:1px solid transparent;color:var(--text-dim);font-family:'Inter';font-size:13.5px;font-style:italic;padding:4px 11px;margin-top:2px;border-radius:6px;transition:background .12s, border-color .12s;cursor:text;}
+  .rec-subtitle-input::placeholder{color:var(--text-dim);opacity:.6;}
+  .rec-subtitle-input:hover{background:var(--panel-2);border-color:var(--line);}
+  .rec-subtitle-input:focus{background:var(--panel-2);border-color:var(--gold);outline:none;color:var(--text);font-style:normal;}
   .rec-temp-row{display:flex;align-items:center;gap:8px;margin-top:12px;}
   .rec-temp-row input{width:80px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;padding:7px 8px;border-radius:5px;}
   .rec-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
@@ -778,6 +787,7 @@
 
       <div class="panel">
         <input type="text" id="formula-name" class="rec-name-input" placeholder="Untitled" />
+        <input type="text" id="formula-subtitle" class="rec-subtitle-input" placeholder="Add a subtitle (optional)" />
         <div class="tag-edit" id="formula-tags"></div>
       </div>
 
@@ -966,7 +976,7 @@ function rid(p){ return p + Math.random().toString(36).slice(2,9); }
    POINTERS into the three seed formula items, so the existing dough engine (which reads
    state[activeType]) keeps working unchanged. Recipe items live in the same library. */
 const DEFAULT_FORMULA = { pizza: defaultPizza, bagel: defaultBagel, donut: defaultDonut };
-function mkFormula(type){ return Object.assign(DEFAULT_FORMULA[type](), { id:rid('f'), kind:'formula', tags:[] }); }
+function mkFormula(type){ return Object.assign(DEFAULT_FORMULA[type](), { id:rid('f'), kind:'formula', tags:[], subtitle:'' }); }
 function seedLibrary(data){
   const lib = ['pizza','bagel','donut'].map(mkFormula);
   // fold any existing recipes (shape-compatible) into the library, tagged as recipe items
@@ -1001,7 +1011,7 @@ let lastError = false;   // the last write attempt failed
 let lastSavedAt = null;  // ms timestamp of the last successful persist (or the loaded file's savedAt)
 
 /* ---------- recipe box (general scalable recipes; items live in `library` with kind:'recipe') ---------- */
-function mkRecipe(name){ return { id:rid('rec'), name:name||'', yield:'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[], kind:'recipe', tags:[] }; }
+function mkRecipe(name){ return { id:rid('rec'), name:name||'', subtitle:'', yield:'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[], kind:'recipe', tags:[] }; }
 function mkRecipeIng(){ return { id:rid('ri'), amount:'', unit:'', name:'', note:'' }; }
 function mkEquip(){ return { id:rid('eq'), name:'', optional:false }; }
 function mkStep(){ return { id:rid('st'), text:'' }; }
@@ -2146,6 +2156,7 @@ function renderRecipeEditor(){
   el.innerHTML = `<div class="panel">
     <p class="section-label">Edit Recipe</p>
     <input type="text" class="rec-name-input" id="rec-name" value="${escapeHtml(r.name)}" placeholder="Untitled" />
+    <input type="text" class="rec-subtitle-input" id="rec-subtitle" value="${escapeHtml(r.subtitle||'')}" placeholder="Add a subtitle (optional)" />
     <div class="tag-edit" id="recipe-tags"></div>
     <div class="rec-yield-row"><span style="font-size:12px;color:var(--text-dim);">Yield</span><input type="text" id="rec-yield" value="${escapeHtml(r.yield||'')}" placeholder="e.g. 24 cookies, 1 pot of chili" /></div>
     <p class="section-label" style="margin-top:18px;">Equipment and Prep</p>
@@ -2166,6 +2177,7 @@ function wireRecipeEditor(r){
   const el = document.getElementById('recipe-editor-panel');
   const byId = id => el.querySelector('#'+id);
   byId('rec-name').oninput = e => { r.name = e.target.value; renderRecipeCard(); scheduleSave(); };
+  byId('rec-subtitle').oninput = e => { r.subtitle = e.target.value; scheduleSave(); };
   byId('rec-yield').oninput = e => { r.yield = e.target.value; renderRecipeCard(); scheduleSave(); };
   byId('rec-temp').oninput = e => { r.ovenTempF = e.target.value; renderRecipeCard(); scheduleSave(); };
   el.querySelectorAll('#rec-ing-rows .rec-row').forEach(row => {
@@ -2379,6 +2391,10 @@ function cardTagsHtml(it){
   const tags = itemTags(it);
   return tags.length ? `<div class="tags">${tags.map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('')}</div>` : '';
 }
+function cardSubHtml(it){
+  const sub = (it.subtitle || '').trim();
+  return sub ? `<span class="card-sub">${escapeHtml(sub)}</span>` : '';
+}
 function clearLibFilters(){
   libTagFilter = '';
   const i = document.getElementById('lib-q'); i.value = '';
@@ -2391,7 +2407,7 @@ function libMatch(item){
   const base = item.kind === 'formula'
     ? formulaTitle(item) + ' ' + formulaSub(item)
     : (item.name || '') + ' ' + recipeSub(item);
-  return (base + ' ' + itemTags(item).join(' ')).toLowerCase().includes(q);
+  return (base + ' ' + (item.subtitle||'') + ' ' + itemTags(item).join(' ')).toLowerCase().includes(q);
 }
 
 function renderLibrary(){
@@ -2423,14 +2439,14 @@ function renderLibrary(){
     ? `<div class="lib-empty"><div class="em-h">No formulas match.</div></div>`
     : `<div class="lib-empty"><div class="em-h">No formulas yet.</div><div class="em-sub">Start one from a template.</div><span class="em-act" data-act="new-formula">+ New Formula</span></div>`;
   fWrap.innerHTML = forms.map(s =>
-    `<div class="lib-card" data-id="${s.id}"><span class="nm">${escapeHtml(formulaTitle(s))}</span>${cardTagsHtml(s)}<span class="del" title="Delete">✕</span></div>`
+    `<div class="lib-card" data-id="${s.id}"><span class="nm">${escapeHtml(formulaTitle(s))}</span>${cardSubHtml(s)}${cardTagsHtml(s)}<span class="del" title="Delete">✕</span></div>`
   ).join('') || emptyF;
 
   const emptyR = filtering
     ? `<div class="lib-empty"><div class="em-h">No recipes match.</div></div>`
     : `<div class="lib-empty"><div class="em-h">No recipes yet.</div><div class="em-sub">Cookies, sauces, brines — anything that isn’t dough.</div><span class="em-act" data-act="new-recipe">+ New Recipe</span></div>`;
   rWrap.innerHTML = recs.map(r =>
-    `<div class="lib-card" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span>${cardTagsHtml(r)}<span class="del" title="Delete">✕</span></div>`
+    `<div class="lib-card" data-id="${r.id}"><span class="nm">${escapeHtml(r.name||'Untitled')}</span>${cardSubHtml(r)}${cardTagsHtml(r)}<span class="del" title="Delete">✕</span></div>`
   ).join('') || emptyR;
 
   fWrap.querySelectorAll('.lib-card').forEach(card => {
@@ -2556,10 +2572,12 @@ document.getElementById('f-flour').oninput = e => {
 };
 document.getElementById('notes').oninput = e => { state[activeType].notes = e.target.value; onChange(false); };
 document.getElementById('formula-name').oninput = e => { state[activeType].name = e.target.value; renderTicket(); scheduleSave(); };
+document.getElementById('formula-subtitle').oninput = e => { state[activeType].subtitle = e.target.value; scheduleSave(); };
 
 function renderAll(){
   const s = state[activeType];
   document.getElementById('formula-name').value = s.name || s.recipeName || '';
+  document.getElementById('formula-subtitle').value = s.subtitle || '';
   renderTagEditor('formula-tags', s, () => scheduleSave());
   document.getElementById('scrap-enabled').checked = scrapOn;
   document.getElementById('scrap-pct').value = scrapPct;
