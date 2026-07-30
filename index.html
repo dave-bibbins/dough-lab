@@ -1301,8 +1301,27 @@ function initLocalStorage(){
 }
 
 /* ---------- portable Export / Import (works on every platform; also the cross-device sync path) ---------- */
-function exportData(){
-  const blob = new Blob([JSON.stringify(currentData(), null, 2)], {type:'application/json'});
+async function exportData(){
+  const json = JSON.stringify(currentData(), null, 2);
+  // Desktop (Chrome/Edge): let the user pick the folder + name — e.g. save straight into an
+  // iCloud Drive folder for easy sync — via the native save picker.
+  if(HAS_FSA && window.showSaveFilePicker){
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: exportFilename(),
+        types:[{ description:'Dough Lab data', accept:{'application/json':['.json']} }]
+      });
+      const w = await handle.createWritable();
+      await w.write(json);
+      await w.close();
+      setSaveBadge('Exported', 'ok'); hideSaveBadgeSoon();
+    }catch(e){
+      if(e.name !== 'AbortError'){ console.error('export failed', e); setSaveBadge('Export failed', 'error'); }
+    }
+    return;
+  }
+  // Fallback (iPad Safari, Firefox): Blob download; the OS/Files save sheet picks the destination.
+  const blob = new Blob([json], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = exportFilename();
