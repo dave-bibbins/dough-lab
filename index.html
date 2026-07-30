@@ -312,6 +312,16 @@
     color:var(--text-dim);cursor:pointer;font-size:12px;line-height:1;
   }
   .extra-row .rm:hover{border-color:var(--crust);color:var(--crust);}
+  /* drag-to-reorder (pointer-based, works on touch + mouse) */
+  .drag-handle{
+    flex:none;align-self:center;cursor:grab;touch-action:none;user-select:none;
+    color:var(--text-dim);opacity:.4;font-size:13px;line-height:1;padding:2px 3px;
+    transition:opacity .12s, color .12s;
+  }
+  .drag-handle:hover{opacity:1;color:var(--gold-bright);}
+  .drag-handle:active{cursor:grabbing;}
+  .rec-step .drag-handle{align-self:flex-start;padding-top:9px;}
+  .extra-row.dragging,.rec-row.dragging,.rec-step.dragging{opacity:.5;background:var(--panel-2);border-radius:5px;}
   .add-extra{
     margin-top:10px;font-family:'Inter';font-weight:600;font-size:12.5px;
     background:none;border:1px dashed var(--line);color:var(--text-dim);
@@ -1557,6 +1567,50 @@ function renderPctFields(){
   document.getElementById('f-yeastType').onchange = e => { s.yeastType = e.target.value; onChange(); };
 }
 
+/* ---------- drag-to-reorder: pointer-based (works on iPad touch + desktop mouse) ----------
+   Rows carry data-id; drag the .drag-handle, rows rearrange live, on drop the model array is
+   reordered to match DOM order via commit(orderedIds). No libraries. */
+function reorderById(arr, ids){
+  const map = new Map(arr.map(x => [x.id, x]));
+  const out = ids.map(id => map.get(id)).filter(Boolean);
+  arr.forEach(x => { if(!out.includes(x)) out.push(x); }); // safety: keep any not listed
+  return out;
+}
+function dragRowAfter(container, rowSel, y){
+  const rows = [...container.querySelectorAll(rowSel + ':not(.dragging)')];
+  for(const r of rows){ const b = r.getBoundingClientRect(); if(y < b.top + b.height/2) return r; }
+  return null;
+}
+function attachSortable(container, rowSel, commit){
+  if(!container) return;
+  container.querySelectorAll(rowSel).forEach(row => {
+    const handle = row.querySelector('.drag-handle');
+    if(!handle) return;
+    handle.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const pid = e.pointerId;
+      row.classList.add('dragging');
+      try{ handle.setPointerCapture(pid); }catch(_){}
+      const move = ev => {
+        const after = dragRowAfter(container, rowSel, ev.clientY);
+        if(after == null) container.appendChild(row);
+        else if(after !== row) container.insertBefore(row, after);
+      };
+      const up = () => {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        handle.removeEventListener('pointercancel', up);
+        try{ handle.releasePointerCapture(pid); }catch(_){}
+        row.classList.remove('dragging');
+        const ids = [...container.querySelectorAll(rowSel)].map(r => r.getAttribute('data-id'));
+        commit(ids);
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
+    });
+  });
+}
 function renderExtraFields(){
   const s = state[activeType];
   const el = document.getElementById('extra-fields');
@@ -1565,6 +1619,7 @@ function renderExtraFields(){
   }else{
     el.innerHTML = s.extras.map(e => `
       <div class="extra-row" data-id="${e.id}">
+        <span class="drag-handle" title="Drag to reorder">⠿</span>
         <input type="text" class="ex-name" value="${e.name}" placeholder="Ingredient" />
         <input type="number" class="ex-pct" step="0.1" value="${e.pct}" />
         <span class="unit">%</span>
@@ -1589,6 +1644,7 @@ function renderExtraFields(){
         onChange();
       };
     });
+    attachSortable(el, '.extra-row', ids => { s.extras = reorderById(s.extras, ids); renderExtraFields(); onChange(); });
   }
 }
 document.getElementById('add-extra-btn').onclick = () => {
@@ -1897,6 +1953,7 @@ function renderFormulaSteps(){
     row.querySelector('.rec-steptext').oninput = e => { st.text = e.target.value; renderTicket(); scheduleSave(); };
     row.querySelector('.rec-rm').onclick = () => { s.steps = s.steps.filter(x => x.id !== id); renderFormulaSteps(); renderTicket(); scheduleSave(); };
   });
+  attachSortable(wrap, '.rec-step', ids => { s.steps = reorderById(s.steps, ids); renderFormulaSteps(); renderTicket(); scheduleSave(); });
 }
 
 /* ---------- render: ticket ---------- */
@@ -2157,6 +2214,7 @@ function renderRecipes(){ renderRecipeEditor(); renderRecipeCard(); }
 
 function recIngRowHtml(ing){
   return `<div class="rec-row" data-id="${ing.id}">
+    <span class="drag-handle" title="Drag to reorder">⠿</span>
     <input type="text" class="rec-amt" value="${escapeHtml(ing.amount)}" placeholder="3/4" title="Amount (e.g. 3/4, 1 1/2, 2)" />
     <select class="rec-unit">${RECIPE_UNITS.map(u=>`<option value="${u}" ${ing.unit===u?'selected':''}>${u||'—'}</option>`).join('')}</select>
     <input type="text" class="rec-iname" value="${escapeHtml(ing.name)}" placeholder="ingredient" />
@@ -2166,6 +2224,7 @@ function recIngRowHtml(ing){
 }
 function recEqRowHtml(eq){
   return `<div class="rec-row" data-id="${eq.id}">
+    <span class="drag-handle" title="Drag to reorder">⠿</span>
     <input type="text" class="rec-eqname" value="${escapeHtml(eq.name)}" placeholder="equipment" />
     <label class="rec-opt"><input type="checkbox" class="rec-eqopt" ${eq.optional?'checked':''} /> Optional</label>
     <button class="rec-rm" title="Remove">✕</button>
@@ -2173,6 +2232,7 @@ function recEqRowHtml(eq){
 }
 function recStepRowHtml(st, i){
   return `<div class="rec-step" data-id="${st.id}">
+    <span class="drag-handle" title="Drag to reorder">⠿</span>
     <span class="num">${i+1}</span>
     <textarea class="rec-steptext" placeholder="step…">${escapeHtml(st.text)}</textarea>
     <button class="rec-rm" title="Remove">✕</button>
@@ -2236,6 +2296,9 @@ function wireRecipeEditor(r){
   });
   byId('rec-add-step').onclick = () => { const it = mkStep(); r.steps.push(it); renderRecipeEditor(); renderRecipeCard(); focusRecRow(it.id,'.rec-steptext'); scheduleSave(); };
   byId('rec-del').onclick = () => deleteRecipe(r.id);
+  attachSortable(byId('rec-ing-rows'), '.rec-row', ids => { r.ingredients = reorderById(r.ingredients, ids); renderRecipeEditor(); renderRecipeCard(); scheduleSave(); });
+  attachSortable(byId('rec-eq-rows'), '.rec-row', ids => { r.equipment = reorderById(r.equipment, ids); renderRecipeEditor(); renderRecipeCard(); scheduleSave(); });
+  attachSortable(byId('rec-step-rows'), '.rec-step', ids => { r.steps = reorderById(r.steps, ids); renderRecipeEditor(); renderRecipeCard(); scheduleSave(); });
   renderTagEditor('recipe-tags', r, () => scheduleSave());
 }
 function focusRecRow(id, sel){
