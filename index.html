@@ -405,6 +405,30 @@
   .autosave-badge.warn{color:var(--gold-bright);border-color:var(--gold);}
   .autosave-badge.error{color:var(--bad);border-color:var(--crust);}
 
+  /* Always-on persistence indicator in the header (primary save-state signal) */
+  .save-chip{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.02em;
+    background:var(--panel);border:1px solid var(--line);color:var(--text-dim);
+    padding:6px 11px;border-radius:999px;cursor:pointer;white-space:nowrap;
+    transition:color .2s,border-color .2s;
+  }
+  .save-chip:hover{border-color:var(--gold);}
+  .save-chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;}
+  .save-chip.ok{color:var(--good);border-color:color-mix(in srgb, var(--good) 45%, var(--line));}
+  .save-chip.saving{color:var(--gold-bright);border-color:var(--gold);}
+  .save-chip.saving .dot{animation:chip-pulse 1s ease-in-out infinite;}
+  .save-chip.warn{color:var(--gold-bright);border-color:var(--gold);}
+  .save-chip.danger{color:var(--bad);border-color:var(--bad);}
+  @keyframes chip-pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  /* Data File panel detail (filename / last-saved / location note) */
+  .datafile-detail{font-size:12px;color:var(--text-dim);line-height:1.5;margin-top:10px;}
+  .datafile-detail b{color:var(--text);font-weight:600;}
+  .datafile-detail .df-note{color:var(--text-dim);opacity:.85;font-size:11.5px;}
+  .datafile-status.warn{color:var(--gold-bright);}
+  .datafile-status.danger{color:var(--bad);}
+
   .ticket-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:10px;}
   .line-cost-toggle{display:flex;align-items:center;gap:8px;font-family:'Inter';font-weight:600;font-size:12.5px;color:var(--text-dim);}
 
@@ -677,6 +701,7 @@
       </div>
     </div>
     <div class="header-actions">
+      <button class="save-chip" id="save-chip" title="Save status"><span class="dot"></span>…</button>
       <div id="lib-actions" style="display:flex;align-items:center;gap:10px;">
         <div class="new-wrap">
           <button class="btn" id="new-btn">+ New</button>
@@ -725,6 +750,7 @@
         <div class="panel" id="datafile-panel">
           <p class="section-label">Data File</p>
           <div class="datafile-status" id="datafile-status">Checking for a connected data file…</div>
+          <div class="datafile-detail" id="datafile-detail"></div>
           <div class="datafile-actions" id="datafile-actions"></div>
           <div class="datafile-actions" id="datafile-portable">
             <button class="btn-secondary" id="export-btn">Export Backup</button>
@@ -966,6 +992,11 @@ let pantry = [];
 let activeRecipeId = null;
 let fileHandle = null;
 let fileName = '';
+// persistence state, surfaced by the header save-chip and Data File panel
+let dirty = false;       // in-memory changes not yet confirmed written
+let saving = false;      // a write is in flight
+let lastError = false;   // the last write attempt failed
+let lastSavedAt = null;  // ms timestamp of the last successful persist (or the loaded file's savedAt)
 
 /* ---------- recipe box (general scalable recipes; items live in `library` with kind:'recipe') ---------- */
 function mkRecipe(name){ return { id:rid('rec'), name:name||'', yield:'', ovenTempF:'', scale:1, ingredients:[], equipment:[], steps:[], kind:'recipe', tags:[] }; }
@@ -1006,6 +1037,76 @@ function hideSaveBadgeSoon(delay){
     const b = document.getElementById('autosave-badge');
     if(b) b.classList.remove('show');
   }, delay || 1400);
+}
+
+/* ---------- always-on persistence status (header chip + Data File panel) ---------- */
+/* Where the current in-memory state can be written, right now:
+   'device'       — no File System Access API (iPad/Firefox): auto-saved to this browser's storage
+   'connected'    — desktop with an active data-file handle: auto-saved to that JSON file
+   'disconnected' — desktop with no usable handle (never connected, or permission lapsed):
+                    edits live ONLY in this tab's memory and are lost on reload */
+function connState(){
+  if(!HAS_FSA) return 'device';
+  return fileHandle ? 'connected' : 'disconnected';
+}
+function hasUserData(){ return (library && library.length) || (pantry && pantry.length); }
+function relTime(ts){
+  if(!ts) return '';
+  const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+  if(s < 10) return 'just now';
+  if(s < 60) return s + 's ago';
+  const m = Math.round(s / 60); if(m < 60) return m + 'm ago';
+  const h = Math.round(m / 60); if(h < 24) return h + 'h ago';
+  return Math.round(h / 24) + 'd ago';
+}
+function renderSaveChip(){
+  const chip = document.getElementById('save-chip');
+  if(!chip) return;
+  const cs = connState();
+  let cls, label, title;
+  if(cs === 'disconnected'){
+    if(hasUserData()){
+      cls = 'danger'; label = 'Not saved';
+      title = "These changes are only in this tab's memory and will be lost if you reload. Click to connect a data file.";
+    }else{
+      cls = 'warn'; label = 'No data file';
+      title = 'Nothing is being saved yet. Click to connect a data file.';
+    }
+  }else if(saving){
+    cls = 'saving'; label = 'Saving…'; title = 'Writing your data…';
+  }else if(lastError){
+    cls = 'danger'; label = 'Save failed';
+    title = "The last save didn't go through. Click to check the data file.";
+  }else if(dirty){
+    cls = 'saving'; label = 'Saving…'; title = 'Unsaved changes — saving shortly.';
+  }else{
+    cls = 'ok'; label = 'Saved';
+    const where = cs === 'device' ? 'this device' : (fileName || 'the data file');
+    title = 'Saved to ' + where + (lastSavedAt ? ' · ' + relTime(lastSavedAt) : '');
+  }
+  chip.className = 'save-chip ' + cls;
+  chip.innerHTML = '<span class="dot"></span>' + escapeHtml(label);
+  chip.title = title;
+}
+/* Fills the Data File panel's detail line (filename / last-saved / an honest note about the folder). */
+function refreshDatafileDetail(){
+  const el = document.getElementById('datafile-detail');
+  if(!el) return;
+  const cs = connState();
+  const saved = lastSavedAt ? `Last saved: <b>${relTime(lastSavedAt)}</b>` : '';
+  if(cs === 'connected'){
+    el.innerHTML =
+      `File: <b>${escapeHtml(fileName || 'dough-lab-data.json')}</b><br>` +
+      `<span class="df-note">Changes save to this file automatically. Browsers can't reveal a file's folder for security — it's wherever you picked it (e.g. your Dough Lab folder or iCloud Drive).</span>` +
+      (saved ? `<br>${saved}` : '');
+  }else if(cs === 'device'){
+    el.innerHTML =
+      `Stored in <b>this browser on this device</b> (not a file you can open in Files).` +
+      (saved ? `<br>${saved}` : '') +
+      `<br><span class="df-note">Use Export to save a JSON copy you can back up or move to another device.</span>`;
+  }else{
+    el.innerHTML = ''; // disconnected: the status line above already explains it
+  }
 }
 
 /* small IndexedDB key/value store, just to remember the file handle across reloads */
@@ -1095,8 +1196,13 @@ function applyData(data){
   }
   const recs = recipeItems();
   if(!recs.find(r => r.id === activeRecipeId)) activeRecipeId = recs[0] ? recs[0].id : null;
+  // freshly loaded state matches its source, so it counts as saved
+  dirty = false; lastError = false;
+  if(data && data.savedAt){ const t = Date.parse(data.savedAt); if(!isNaN(t)) lastSavedAt = t; }
   screen = 'library';
   render();
+  renderSaveChip();
+  refreshDatafileDetail();
 }
 
 /* One place that describes the full saved payload — used by file writes, localStorage, and Export.
@@ -1107,10 +1213,10 @@ function currentData(){
   // `library` already contains the formula items that state.pizza/bagel/donut point into, plus recipe items.
   return { formatVersion: FORMAT_VERSION, savedAt: new Date().toISOString(), library, pantry, presets, ui: {activeType, activeRecipeId, scrapOn, scrapPct, showLineCosts} };
 }
-/* Timestamped export name so synced copies self-sort by recency, e.g. dough-lab-data_2026-07-28_1430.json */
+/* Plain, recognizable export name. Recency still lives in the payload's `savedAt` field (and the OS
+   file date); the earlier timestamped filename was dropped as more confusing than helpful in practice. */
 function exportFilename(){
-  const d = new Date(), p = n => String(n).padStart(2,'0');
-  return `dough-lab-data_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.json`;
+  return 'dough-lab-data.json';
 }
 
 /* Persistence routes on capability: desktop Chrome/Edge write the user's data file (File System
@@ -1120,31 +1226,37 @@ const LOCAL_KEY = 'doughlab-data-v1';
 
 async function saveNow(){
   if(HAS_FSA){
-    if(!fileHandle) return false;
+    if(!fileHandle){ renderSaveChip(); return false; }
+    saving = true; renderSaveChip();
     try{
       await writeToHandle(fileHandle, currentData());
-      setSaveBadge('Saved', 'ok');
-      hideSaveBadgeSoon();
+      dirty = false; saving = false; lastError = false; lastSavedAt = Date.now();
+      renderSaveChip(); refreshDatafileDetail();
       return true;
     }catch(e){
+      saving = false; lastError = true;
       console.error('data file write failed', e);
-      setSaveBadge('Save failed — check file access', 'error');
+      renderSaveChip();
       return false;
     }
   }
+  saving = true; renderSaveChip();
   try{
     localStorage.setItem(LOCAL_KEY, JSON.stringify(currentData()));
-    setSaveBadge('Saved', 'ok');
-    hideSaveBadgeSoon();
+    dirty = false; saving = false; lastError = false; lastSavedAt = Date.now();
+    renderSaveChip(); refreshDatafileDetail();
     return true;
   }catch(e){
+    saving = false; lastError = true;
     console.error('localStorage write failed', e);
-    setSaveBadge('Save failed — storage full or blocked', 'error');
+    renderSaveChip();
     return false;
   }
 }
 function scheduleSave(){
-  if(HAS_FSA && !fileHandle) return; // desktop: nothing to save until a file is connected
+  dirty = true;
+  renderSaveChip();
+  if(HAS_FSA && !fileHandle) return; // desktop, no file: nothing to write — the chip now shows the risk
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveNow, 300);
 }
@@ -1245,31 +1357,33 @@ async function tryReconnect(){
 function updateDatafileUI(mode, pendingHandle){
   const statusEl = document.getElementById('datafile-status');
   const actionsEl = document.getElementById('datafile-actions');
+  statusEl.className = 'datafile-status';
   if(mode === 'unsupported'){
-    statusEl.innerHTML = "This browser doesn't support direct file access (Chrome or Edge required) — nothing will be saved.";
+    statusEl.classList.add('warn');
+    statusEl.innerHTML = "This browser can't save to a file directly (Chrome or Edge needed). Work stays in this tab only — use <b>Export</b> to keep a copy.";
     actionsEl.innerHTML = '';
-    return;
-  }
-  if(mode === 'local'){
-    statusEl.innerHTML = "Auto-saving to this device (this browser's storage). Use <b>Export</b> / <b>Import</b> below to sync recipes with another device via a JSON file.";
+  }else if(mode === 'local'){
+    statusEl.innerHTML = "Auto-saving to this device.";
     actionsEl.innerHTML = '';
-    return;
-  }
-  if(mode === 'connected'){
-    statusEl.innerHTML = `Connected: <b>${escapeHtml(fileName)}</b>`;
+  }else if(mode === 'connected'){
+    statusEl.innerHTML = "Connected — changes save automatically.";
     actionsEl.innerHTML = `<button class="btn-secondary" id="df-switch">Use a Different File</button>`;
     document.getElementById('df-switch').onclick = connectExisting;
   }else if(mode === 'reconnect'){
-    statusEl.innerHTML = `Connection to <b>${escapeHtml(fileName)}</b> needs to be reconfirmed.`;
+    statusEl.classList.add('danger');
+    statusEl.innerHTML = `Reconnect needed for <b>${escapeHtml(fileName)}</b> — until you do, changes stay in this tab's memory only and are lost on reload.`;
     actionsEl.innerHTML = `<button class="btn-secondary" id="df-reconnect">Reconnect</button><button class="btn-secondary" id="df-switch">Use a Different File</button>`;
     document.getElementById('df-reconnect').onclick = () => reconnectPermission(pendingHandle);
     document.getElementById('df-switch').onclick = connectExisting;
   }else{
-    statusEl.innerHTML = "Not connected — nothing will be saved until you connect a data file.";
+    statusEl.classList.add('danger');
+    statusEl.innerHTML = "Not connected — anything you enter now is kept only in this tab and is lost on reload. Connect a file to start saving.";
     actionsEl.innerHTML = `<button class="btn-secondary" id="df-create">Create Data File</button><button class="btn-secondary" id="df-open">Open Existing File</button>`;
     document.getElementById('df-create').onclick = connectNew;
     document.getElementById('df-open').onclick = connectExisting;
   }
+  renderSaveChip();
+  refreshDatafileDetail();
 }
 
 
@@ -2348,6 +2462,7 @@ document.addEventListener('click', e => {
   if(wrap && !wrap.contains(e.target)) document.getElementById('new-menu').classList.add('view-hidden');
 });
 document.getElementById('pantry-btn').onclick = openPantry;
+document.getElementById('save-chip').onclick = openPantry; // jump to the Data File panel
 document.getElementById('back-btn').onclick = goLibrary;
 document.getElementById('dup-btn').onclick = duplicateActive;
 
@@ -2376,6 +2491,7 @@ function render(){
   updateViewVisibility();
   updateHeaderActions();
   if(screen === 'library') renderLibrary(); else renderAll();
+  renderSaveChip();
 }
 function updateHeaderActions(){
   const lib = screen === 'library';
@@ -2456,6 +2572,16 @@ function renderAll(){
   renderAssemblyFields();
   renderRecipes();
 }
+
+/* Warn before leaving only when data would genuinely be lost — i.e. there are unsaved changes
+   and nowhere they've been written (desktop with no file / lapsed permission, or a failed write).
+   The device (localStorage) path saves reliably, so it never nags. */
+window.addEventListener('beforeunload', (e) => {
+  const atRisk = dirty && hasUserData() && HAS_FSA && (!fileHandle || lastError);
+  if(atRisk){ e.preventDefault(); e.returnValue = ''; }
+});
+// keep the "last saved … ago" text current without a user action
+setInterval(() => { renderSaveChip(); if(screen === 'pantry') refreshDatafileDetail(); }, 30000);
 
 /* ---------- boot ---------- */
 (function init(){
