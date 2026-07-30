@@ -84,7 +84,13 @@
 
   .grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:22px;align-items:start;}
   .grid.solo-view{grid-template-columns:1fr;}
-  @media (max-width:860px){.grid{grid-template-columns:1fr;}}
+  /* Tablet/narrow: stack to one column and float the ticket (recipe card + Bench/Print) above the
+     inputs — iPad use is mostly read-only, so the card should be topmost with minimal scrolling.
+     Desktop (>860px) keeps the side-by-side layout untouched. */
+  @media (max-width:860px){
+    .grid{grid-template-columns:1fr;}
+    .grid:not(.solo-view) .col-ticket{order:-1;margin-bottom:22px;}
+  }
 
   .view-hidden{display:none !important;}
 
